@@ -1,0 +1,28 @@
+# Node and frontend artifacts
+frontend/node_modules/
+frontend/dist/
+
+# Python virtual environments
+backend/.venv/
+.venv/
+
+# UV cache
+.uv-cache/
+
+# Database volumes
+.postgres-data/
+.postgres-data-local/
+
+# Runtime storage and logs
+backend/storage/*
+!backend/storage/.gitkeep
+logs/
+
+# PID tracking
+scripts/.processes
+
+# Generated PDFs or temporary files
+*.pdf
+
+# macOS / system files
+.DS_Store

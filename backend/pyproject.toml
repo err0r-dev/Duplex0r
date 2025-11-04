@@ -1,0 +1,16 @@
+[project]
+name = "dupl3x-backend"
+version = "0.1.0"
+description = "Backend service for the Dupl3x PDF interlacing application."
+readme = "../README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.115.4",
+    "uvicorn[standard]>=0.30.6",
+    "sqlalchemy>=2.0.34",
+    "asyncpg>=0.29.0",
+    "python-multipart>=0.0.9",
+    "pydantic-settings>=2.4.0",
+    "PyPDF2>=3.0.1",
+    "aiofiles>=24.1.0",
+]
