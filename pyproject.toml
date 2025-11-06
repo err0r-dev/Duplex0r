@@ -1,0 +1,22 @@
+[project]
+name = "dupl3x"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "fastapi>=0.111.0",
+    "uvicorn[standard]>=0.30.0",
+    "pypdf>=4.2.0",
+    "sqlalchemy>=2.0.29",
+    "asyncpg>=0.29.0",
+    "aiosqlite>=0.20.0",
+    "python-multipart>=0.0.9",
+    "pydantic-settings>=2.3.4",
+    "greenlet>=3.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.2.0",
+]

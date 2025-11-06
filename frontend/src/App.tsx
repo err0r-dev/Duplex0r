@@ -1,682 +1,625 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react'
+import type { ChangeEvent } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { AlertOctagon, ArrowUpDown, Download, Loader2, RefreshCcw, RotateCcw, Trash2 } from "lucide-react";
+
+import { Alert, AlertDescription, AlertTitle } from "./components/ui/alert";
+import { Button } from "./components/ui/button";
 import {
-  ActivityIndicator,
-  SafeAreaView,
-  ScrollView,
-  Text,
-  TextInput,
-  View,
-  Pressable,
-} from 'react-native'
-import type { ViewStyle } from 'react-native'
-import { DndContext, type DragEndEvent } from '@dnd-kit/core'
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "./components/ui/card";
 import {
-  SortableContext,
-  arrayMove,
-  verticalListSortingStrategy,
-  useSortable,
-} from '@dnd-kit/sortable'
-import { CSS } from '@dnd-kit/utilities'
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "./components/ui/dialog";
+import { Input } from "./components/ui/input";
+import { Label } from "./components/ui/label";
+import { Progress } from "./components/ui/progress";
+import { Separator } from "./components/ui/separator";
+import { FileDropZone } from "./components/FileDropZone";
+import { ThemeToggle } from "./components/theme-toggle";
 
-import {
-  API_BASE,
-  createSession,
-  fetchSession,
-  fetchSettings,
-  interlaceFiles,
-  logFrontendError,
-  reorderFiles,
-  resetSession,
-  uploadFiles,
-} from './api'
-import { PdfPreview } from './components/PdfPreview'
-import type { InterlaceResult, SessionFile, SettingsResponse, UUID } from './types'
+type Order = "first_second" | "second_first";
 
-interface SortableFileCardProps {
-  file: SessionFile
-  index: number
-}
+type ProcessingLog = {
+  id: number;
+  created_at: string;
+  first_pdf_name: string;
+  second_pdf_name: string;
+  swapped_order: boolean;
+  output_filename: string;
+  status: string;
+  error_message: string | null;
+};
 
-const cardShadow: ViewStyle = {
-  shadowColor: '#020617',
-  shadowOffset: { width: 0, height: 18 },
-  shadowOpacity: 0.45,
-  shadowRadius: 32,
-  elevation: 12,
-}
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, "") || "http://localhost:8000/api";
 
-function SortableFileCard({ file, index }: SortableFileCardProps) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
-    id: file.id,
-  })
+const formatBytes = (bytes: number) => {
+  if (bytes === 0) return "0 B";
+  const sizes = ["B", "KB", "MB", "GB"];
+  const i = Math.floor(Math.log(bytes) / Math.log(1024));
+  const value = bytes / Math.pow(1024, i);
+  return `${value.toFixed(1)} ${sizes[i]}`;
+};
 
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    cursor: isDragging ? 'grabbing' : 'grab',
-  }
-
-  return (
-    <div ref={setNodeRef} style={{ ...style, marginBottom: 24 }}>
-      <div {...attributes} {...listeners} style={{ display: 'block' }}>
-        <View
-          style={[
-            {
-              borderRadius: 24,
-              padding: 20,
-              backgroundColor: 'var(--color-surface)',
-              borderWidth: 1,
-              borderColor: 'rgba(148, 163, 184, 0.25)',
-              gap: 16,
-            },
-            cardShadow,
-          ]}
-        >
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-            <View
-              style={{
-                width: 38,
-                height: 38,
-              borderRadius: 12,
-              backgroundColor: 'rgba(56, 189, 248, 0.2)',
-              alignItems: 'center',
-              justifyContent: 'center',
-              borderWidth: 1,
-              borderColor: 'rgba(56, 189, 248, 0.45)',
-            }}
-          >
-            <Text style={{ color: 'var(--color-accent)', fontWeight: '600' }}>{index + 1}</Text>
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={{ fontSize: 18, fontWeight: '600', color: 'var(--color-text)' }}>
-              {file.original_filename}
-            </Text>
-            <Text style={{ color: 'var(--color-muted)', fontSize: 13 }}>
-              {(file.file_size / 1024).toFixed(1)} KB
-            </Text>
-          </View>
-          </View>
-          <PdfPreview label="Preview" source={file.preview_url} />
-        </View>
-      </div>
-    </div>
-  )
-}
-
-interface BannerProps {
-  intent: 'info' | 'success' | 'danger'
-  message: string
-  onDismiss: () => void
-}
-
-function Banner({ intent, message, onDismiss }: BannerProps) {
-  const background = useMemo(() => {
-    if (intent === 'success') return 'rgba(22, 163, 74, 0.18)'
-    if (intent === 'danger') return 'rgba(239, 68, 68, 0.18)'
-    return 'rgba(56, 189, 248, 0.18)'
-  }, [intent])
-
-  return (
-    <View
-      style={{
-        padding: 16,
-        borderRadius: 18,
-        backgroundColor: background,
-        borderWidth: 1,
-        borderColor:
-          intent === 'danger'
-            ? 'rgba(239, 68, 68, 0.45)'
-            : intent === 'success'
-            ? 'rgba(22, 163, 74, 0.35)'
-            : 'rgba(56, 189, 248, 0.35)',
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        gap: 16,
-      }}
-    >
-      <Text style={{ flex: 1, color: 'var(--color-text)', fontSize: 14 }}>{message}</Text>
-      <Pressable
-        onPress={onDismiss}
-        style={({ pressed }) => ({
-          paddingHorizontal: 12,
-          paddingVertical: 6,
-          borderRadius: 12,
-          backgroundColor: pressed
-            ? 'rgba(15, 23, 42, 0.45)'
-            : 'rgba(15, 23, 42, 0.25)',
-        })}
-      >
-        <Text style={{ color: 'var(--color-muted)', fontSize: 12 }}>Close</Text>
-      </Pressable>
-    </View>
-  )
-}
+const extractFilename = (header: string | null, fallback = "interleaved.pdf") => {
+  if (!header) return fallback;
+  const match = header.match(/filename=\"?([^\";]+)\"?/i);
+  return match?.[1] ?? fallback;
+};
 
 function App() {
-  const [sessionId, setSessionId] = useState<UUID | null>(null)
-  const [isLoadingSession, setIsLoadingSession] = useState(true)
-  const [settings, setSettings] = useState<SettingsResponse | null>(null)
-  const [files, setFiles] = useState<SessionFile[]>([])
-  const [orderDirty, setOrderDirty] = useState(false)
-  const [resultName, setResultName] = useState('interlaced.pdf')
-  const [result, setResult] = useState<InterlaceResult | null>(null)
-  const [isUploading, setIsUploading] = useState(false)
-  const [isConfirming, setIsConfirming] = useState(false)
-  const [isInterlacing, setIsInterlacing] = useState(false)
-  const [isResetting, setIsResetting] = useState(false)
-  const [statusMessage, setStatusMessage] = useState<string | null>(null)
-  const [errorMessage, setErrorMessage] = useState<string | null>(null)
-  const [activeTab, setActiveTab] = useState<'workspace' | 'settings'>('workspace')
-  const [theme, setTheme] = useState<'dark' | 'light'>('dark')
-  const fileInputRef = useRef<HTMLInputElement | null>(null)
+  const [firstFile, setFirstFile] = useState<File | null>(null);
+  const [secondFile, setSecondFile] = useState<File | null>(null);
+  const [order, setOrder] = useState<Order>("first_second");
+  const [defaultOrder, setDefaultOrder] = useState<Order>("first_second");
+  const [logs, setLogs] = useState<ProcessingLog[]>([]);
+  const [loadingLogs, setLoadingLogs] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [isSavingSettings, setIsSavingSettings] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [showFilenameDialog, setShowFilenameDialog] = useState(false);
+  const [outputFilename, setOutputFilename] = useState("");
+  const [showClearLogsDialog, setShowClearLogsDialog] = useState(false);
+  const [isClearingLogs, setIsClearingLogs] = useState(false);
+
+  const canProcess = useMemo(
+    () => Boolean(firstFile && secondFile && !isProcessing),
+    [firstFile, secondFile, isProcessing],
+  );
+
+  const refreshLogs = useCallback(async () => {
+    setLoadingLogs(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/logs/`);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch logs (${response.status})`);
+      }
+      const payload = (await response.json()) as ProcessingLog[];
+      setLogs(payload);
+    } catch (fetchError) {
+      console.error(fetchError);
+    } finally {
+      setLoadingLogs(false);
+    }
+  }, []);
+
+  const handleClearLogs = async () => {
+    setIsClearingLogs(true);
+    setError(null);
+    setSuccessMessage(null);
+    try {
+      const response = await fetch(`${API_BASE_URL}/logs/`, {
+        method: "DELETE",
+      });
+      if (!response.ok) {
+        throw new Error(`Failed to clear logs (${response.status})`);
+      }
+      const result = (await response.json()) as { message: string; count: number };
+      setSuccessMessage(result.message);
+      setShowClearLogsDialog(false);
+      void refreshLogs();
+    } catch (fetchError) {
+      console.error(fetchError);
+      setError(fetchError instanceof Error ? fetchError.message : "Failed to clear logs.");
+    } finally {
+      setIsClearingLogs(false);
+    }
+  };
+
+  const loadSettings = useCallback(async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/settings/`);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch settings (${response.status})`);
+      }
+      const payload = (await response.json()) as { default_order: Order };
+      setDefaultOrder(payload.default_order);
+      setOrder(payload.default_order);
+    } catch (fetchError) {
+      console.error(fetchError);
+      setError("Unable to load settings from the server. Using defaults.");
+    }
+  }, []);
 
   useEffect(() => {
-    document.body.dataset.theme = theme
-  }, [theme])
+    void loadSettings();
+    void refreshLogs();
+  }, [loadSettings, refreshLogs]);
 
-  const captureError = useCallback(
-    (message: string, error: unknown, location: string) => {
-      const errorObject = error instanceof Error ? error : new Error(String(error))
-      setErrorMessage(message)
-      setStatusMessage(null)
-      void logFrontendError({
-        session_id: sessionId,
-        location,
-        message: errorObject.message,
-        stack: errorObject.stack,
-        metadata: { detail: message },
-      })
-    },
-    [sessionId],
-  )
+  const handleSwapFiles = () => {
+    if (!firstFile && !secondFile) return;
+    setError(null);
+    setSuccessMessage(null);
+    const currentFirst = firstFile;
+    const currentSecond = secondFile;
+    setFirstFile(currentSecond);
+    setSecondFile(currentFirst);
+    setOrder((prev) => (prev === "first_second" ? "second_first" : "first_second"));
+  };
 
-  useEffect(() => {
-    const bootstrap = async () => {
-      try {
-        setIsLoadingSession(true)
-        const sessionResponse = await createSession()
-        setSessionId(sessionResponse.id)
-        const detail = await fetchSession(sessionResponse.id)
-        setFiles(detail.files)
-      } catch (error) {
-        captureError('Unable to start a new session.', error, 'bootstrap')
-      } finally {
-        setIsLoadingSession(false)
-      }
+  const handleProcess = () => {
+    setError(null);
+    setSuccessMessage(null);
+
+    if (!firstFile || !secondFile) {
+      setError("Select two PDF files before processing.");
+      return;
     }
 
-    void bootstrap()
-  }, [captureError])
+    // Generate suggested filename
+    const firstName = firstFile.name.replace(/\.pdf$/i, "");
+    const secondName = secondFile.name.replace(/\.pdf$/i, "");
+    const suggestedFilename = `${firstName}_${secondName}_interleaved.pdf`;
 
-  useEffect(() => {
-    const loadSettings = async () => {
-      try {
-        const currentSettings = await fetchSettings()
-        setSettings(currentSettings)
-      } catch (error) {
-        captureError('Unable to load settings.', error, 'settings')
-      }
+    setOutputFilename(suggestedFilename);
+    setShowFilenameDialog(true);
+  };
+
+  const handleConfirmProcess = async () => {
+    if (!firstFile || !secondFile) {
+      return;
     }
 
-    void loadSettings()
-  }, [captureError])
-
-  const handleFilesSelected = async (event: ChangeEvent<HTMLInputElement>) => {
-    if (!sessionId) return
-    const selected = Array.from(event.target.files ?? [])
-    if (selected.length !== 2) {
-      setErrorMessage('Please choose exactly two PDF files to continue.')
-      return
+    // Validate filename
+    let finalFilename = outputFilename.trim();
+    if (!finalFilename) {
+      setError("Please enter a filename.");
+      return;
     }
 
-    setErrorMessage(null)
-    setStatusMessage(null)
-    setIsUploading(true)
+    // Ensure .pdf extension
+    if (!finalFilename.toLowerCase().endsWith(".pdf")) {
+      finalFilename += ".pdf";
+    }
+
     try {
-      const detail = await uploadFiles(sessionId, selected)
-      setFiles(detail.files)
-      setOrderDirty(false)
-      setResult(null)
-      setResultName('interlaced.pdf')
-      setStatusMessage('Files uploaded successfully. Drag to adjust their order.')
-    } catch (error) {
-      captureError('Uploading the PDFs failed.', error, 'upload')
-    } finally {
-      setIsUploading(false)
-      if (fileInputRef.current) {
-        fileInputRef.current.value = ''
-      }
-    }
-  }
+      setIsProcessing(true);
+      const formData = new FormData();
+      formData.append("first_pdf", firstFile);
+      formData.append("second_pdf", secondFile);
+      formData.append("order", order);
 
-  const handleDragEnd = useCallback(
-    (event: DragEndEvent) => {
-      const { active, over } = event
-      if (!over || active.id === over.id) {
-        return
+      const response = await fetch(`${API_BASE_URL}/process/`, {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const payload = await response.json().catch(() => null) as { detail?: string } | null;
+        throw new Error(payload?.detail ?? "Processing failed");
       }
 
-      setFiles((current) => {
-        const oldIndex = current.findIndex((file) => file.id === active.id)
-        const newIndex = current.findIndex((file) => file.id === over.id)
-        if (oldIndex === -1 || newIndex === -1) {
-          return current
-        }
-        const reordered = arrayMove(current, oldIndex, newIndex)
-        setOrderDirty(true)
-        return reordered
-      })
-    },
-    [],
-  )
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
 
-  const handleConfirmOrder = async () => {
-    if (!sessionId || files.length === 0) {
-      return
-    }
-    setIsConfirming(true)
-    setErrorMessage(null)
-    try {
-      const detail = await reorderFiles(
-        sessionId,
-        files.map((file) => file.id),
-      )
-      setFiles(detail.files)
-      setOrderDirty(false)
-      setStatusMessage('Order saved. You can now generate the interlaced PDF.')
-    } catch (error) {
-      captureError('We could not update the order.', error, 'reorder')
-    } finally {
-      setIsConfirming(false)
-    }
-  }
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = finalFilename;
+      anchor.click();
+      anchor.remove();
 
-  const handleInterlace = async () => {
-    if (!sessionId || files.length !== 2) {
-      return
-    }
-    setIsInterlacing(true)
-    setErrorMessage(null)
-    try {
-      const payloadName = resultName.trim() || 'interlaced.pdf'
-      const response = await interlaceFiles(sessionId, {
-        file_order: files.map((file) => file.id),
-        desired_name: payloadName,
-      })
-      setResult(response)
-      setStatusMessage('Interlacing complete. Preview and download your document below.')
-    } catch (error) {
-      captureError('Interlacing failed. Please try again.', error, 'interlace')
-    } finally {
-      setIsInterlacing(false)
-    }
-  }
+      window.URL.revokeObjectURL(url);
 
-  const handleReset = async () => {
-    if (!sessionId) return
-    setIsResetting(true)
-    setErrorMessage(null)
-    try {
-      const detail = await resetSession(sessionId)
-      setFiles(detail.files)
-      setOrderDirty(false)
-      setResult(null)
-      setResultName('interlaced.pdf')
-      setStatusMessage('Session reset. Upload two fresh PDFs to start again.')
-    } catch (error) {
-      captureError('Unable to reset the workspace.', error, 'reset')
+      setSuccessMessage(`Processing complete. Downloaded ${finalFilename}.`);
+      setShowFilenameDialog(false);
+      void refreshLogs();
+    } catch (err) {
+      console.error(err);
+      setError(err instanceof Error ? err.message : "Unexpected error during processing.");
     } finally {
-      setIsResetting(false)
-      if (fileInputRef.current) {
-        fileInputRef.current.value = ''
+      setIsProcessing(false);
+    }
+  };
+
+  const handleReset = () => {
+    setFirstFile(null);
+    setSecondFile(null);
+    setOrder(defaultOrder);
+    setError(null);
+    setSuccessMessage(null);
+  };
+
+  const handleSaveDefaultOrder = async () => {
+    setIsSavingSettings(true);
+    setError(null);
+    setSuccessMessage(null);
+    try {
+      const response = await fetch(`${API_BASE_URL}/settings/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ default_order: order }),
+      });
+      if (!response.ok) {
+        const payload = await response.json().catch(() => null) as { detail?: string } | null;
+        throw new Error(payload?.detail ?? "Unable to save default order.");
       }
+      setDefaultOrder(order);
+      setSuccessMessage("Default order saved.");
+    } catch (err) {
+      console.error(err);
+      setError(err instanceof Error ? err.message : "Unable to save default order.");
+    } finally {
+      setIsSavingSettings(false);
     }
-  }
+  };
 
-  const hasFiles = files.length === 2
-  const downloadHref = useMemo(() => {
-    if (!result) return null
-    return `${API_BASE}${result.download_url}`
-  }, [result])
+  const handleFirstFileChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0] ?? null;
+    setFirstFile(file);
+  };
 
-  const isActionDisabled = !sessionId || !hasFiles
+  const handleSecondFileChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0] ?? null;
+    setSecondFile(file);
+  };
 
-  const renderWorkspace = () => (
-    <View style={{ gap: 28 }}>
-      <View
-        style={[
-          {
-            padding: 28,
-            backgroundColor: 'rgba(15, 23, 42, 0.6)',
-            borderRadius: 28,
-            borderWidth: 1,
-            borderColor: 'rgba(148, 163, 184, 0.2)',
-            gap: 24,
-          },
-          cardShadow,
-        ]}
-      >
-        <View style={{ gap: 12 }}>
-          <Text style={{ fontSize: 24, fontWeight: '700' }}>Upload two PDFs</Text>
-          <Text style={{ color: 'var(--color-muted)', fontSize: 15 }}>
-            Drop or browse two PDF files to begin. You can drag them to adjust their order before interlacing.
-          </Text>
-        </View>
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="application/pdf"
-          multiple
-          onChange={handleFilesSelected}
-          style={{ display: 'none' }}
-        />
-        <Pressable
-          onPress={() => fileInputRef.current?.click()}
-          style={({ pressed }) => ({
-            paddingVertical: 22,
-            borderRadius: 24,
-            borderWidth: 2,
-            borderColor: pressed ? 'rgba(56, 189, 248, 0.6)' : 'rgba(56, 189, 248, 0.35)',
-            borderStyle: 'dashed',
-            alignItems: 'center',
-            justifyContent: 'center',
-            backgroundColor: pressed
-              ? 'rgba(56, 189, 248, 0.15)'
-              : 'rgba(15, 23, 42, 0.45)',
-          })}
-        >
-          {isUploading ? (
-            <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
-              <ActivityIndicator color="var(--color-accent)" />
-              <Text style={{ color: 'var(--color-text)' }}>Uploading…</Text>
-            </View>
-          ) : (
-            <View style={{ gap: 8, alignItems: 'center' }}>
-              <Text style={{ fontWeight: '600', fontSize: 16 }}>Click to choose files</Text>
-              <Text style={{ color: 'var(--color-muted)', fontSize: 13 }}>
-                Supported format: PDF only • Exactly two files
-              </Text>
-            </View>
-          )}
-        </Pressable>
-      </View>
-
-      {files.length > 0 && (
-        <View style={{ gap: 20 }}>
-          <Text style={{ fontSize: 18, fontWeight: '700' }}>Arrange order</Text>
-          <DndContext onDragEnd={handleDragEnd}>
-            <SortableContext items={files.map((file) => file.id)} strategy={verticalListSortingStrategy}>
-              {files.map((file, index) => (
-                <SortableFileCard key={file.id} file={file} index={index} />
-              ))}
-            </SortableContext>
-          </DndContext>
-        </View>
-      )}
-
-      <View style={{
-        flexDirection: 'row',
-        gap: 16,
-        flexWrap: 'wrap',
-      }}>
-        <Pressable
-          onPress={handleConfirmOrder}
-          disabled={isActionDisabled || !orderDirty}
-          style={({ pressed }) => ({
-            paddingVertical: 14,
-            paddingHorizontal: 24,
-            borderRadius: 999,
-            backgroundColor:
-              isActionDisabled || !orderDirty
-                ? 'rgba(148, 163, 184, 0.25)'
-                : pressed
-                ? 'rgba(56, 189, 248, 0.6)'
-                : 'rgba(56, 189, 248, 0.85)',
-          })}
-        >
-          <Text style={{ color: '#0f172a', fontWeight: '600' }}>
-            {isConfirming ? 'Saving…' : 'Confirm order'}
-          </Text>
-        </Pressable>
-
-        <Pressable
-          onPress={handleInterlace}
-          disabled={isActionDisabled || orderDirty || isInterlacing}
-          style={({ pressed }) => ({
-            paddingVertical: 14,
-            paddingHorizontal: 24,
-            borderRadius: 999,
-            backgroundColor:
-              isActionDisabled || orderDirty
-                ? 'rgba(148, 163, 184, 0.25)'
-                : pressed
-                ? 'rgba(59, 130, 246, 0.5)'
-                : 'rgba(59, 130, 246, 0.85)',
-          })}
-        >
-          <Text style={{ color: '#0f172a', fontWeight: '600' }}>
-            {isInterlacing ? 'Interlacing…' : 'Interlace PDFs'}
-          </Text>
-        </Pressable>
-
-        <Pressable
-          onPress={handleReset}
-          disabled={!sessionId || isResetting}
-          style={({ pressed }) => ({
-            paddingVertical: 14,
-            paddingHorizontal: 24,
-            borderRadius: 999,
-            backgroundColor: pressed ? 'rgba(248, 113, 113, 0.45)' : 'rgba(248, 113, 113, 0.3)',
-          })}
-        >
-          <Text style={{ color: '#fee2e2', fontWeight: '600' }}>
-            {isResetting ? 'Resetting…' : 'Reset workspace'}
-          </Text>
-        </Pressable>
-      </View>
-
-      {hasFiles && (
-        <View style={{ gap: 16 }}>
-          <Text style={{ fontWeight: '700', fontSize: 18 }}>Result name</Text>
-          <TextInput
-            value={resultName}
-            onChangeText={setResultName}
-            placeholder="interlaced.pdf"
-            style={{
-              paddingVertical: 14,
-              paddingHorizontal: 18,
-              borderRadius: 18,
-              borderWidth: 1,
-              borderColor: 'rgba(148, 163, 184, 0.35)',
-              backgroundColor: 'rgba(15, 23, 42, 0.55)',
-              color: 'var(--color-text)',
-            }}
-          />
-        </View>
-      )}
-
-      {result && (
-        <View style={{ gap: 20 }}>
-          <Text style={{ fontWeight: '700', fontSize: 20 }}>Interlaced result</Text>
-          <PdfPreview label={resultName} source={result.preview_url} />
-          <View style={{ flexDirection: 'row', gap: 16, flexWrap: 'wrap' }}>
-            {downloadHref && (
-              <a
-                href={downloadHref}
-                download={resultName}
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  padding: '14px 26px',
-                  borderRadius: 999,
-                  background: 'rgba(56, 189, 248, 0.9)',
-                  color: '#0f172a',
-                  fontWeight: 600,
-                }}
-              >
-                Download PDF
-              </a>
-            )}
-          </View>
-        </View>
-      )}
-    </View>
-  )
-
-  const renderSettings = () => (
-    <View
-      style={[
-        {
-          padding: 28,
-          backgroundColor: 'rgba(15, 23, 42, 0.6)',
-          borderRadius: 28,
-          borderWidth: 1,
-          borderColor: 'rgba(148, 163, 184, 0.2)',
-          gap: 24,
-        },
-        cardShadow,
-      ]}
-    >
-      <Text style={{ fontSize: 24, fontWeight: '700' }}>Environment details</Text>
-      <Text style={{ color: 'var(--color-muted)', fontSize: 15 }}>
-        Database credentials are available below for quick reference during local development.
-      </Text>
-      <View style={{ gap: 12 }}>
-        {settings ? (
-          Object.entries(settings.database).map(([key, value]) => (
-            <View
-              key={key}
-              style={{
-                padding: 18,
-                borderRadius: 18,
-                backgroundColor: 'rgba(15, 23, 42, 0.55)',
-                borderWidth: 1,
-                borderColor: 'rgba(148, 163, 184, 0.2)',
-              }}
-            >
-              <Text style={{ fontSize: 12, color: 'var(--color-muted)', textTransform: 'uppercase' }}>
-                {key}
-              </Text>
-              <Text style={{ fontSize: 16, fontWeight: '600' }}>{value}</Text>
-            </View>
-          ))
-        ) : (
-          <ActivityIndicator color="var(--color-accent)" />
-        )}
-      </View>
-    </View>
-  )
-
-  if (isLoadingSession) {
-    return (
-      <View
-        style={{
-          flex: 1,
-          alignItems: 'center',
-          justifyContent: 'center',
-          backgroundColor: 'var(--color-bg)',
-        }}
-      >
-        <ActivityIndicator color="var(--color-accent)" size="large" />
-        <Text style={{ marginTop: 16, color: 'var(--color-muted)' }}>Preparing your workspace…</Text>
-      </View>
-    )
-  }
+  const orderLabel = order === "first_second" ? "First PDF first" : "Second PDF first";
 
   return (
-    <SafeAreaView style={{ flex: 1 }}>
-      <ScrollView
-        contentContainerStyle={{
-          minHeight: '100%',
-          paddingVertical: 48,
-          paddingHorizontal: 24,
-          maxWidth: 1200,
-          width: '100%',
-          marginHorizontal: 'auto',
-        }}
-      >
-        <View style={{ gap: 32 }}>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-            <View>
-              <Text style={{ fontSize: 32, fontWeight: '800' }}>Dupl3x</Text>
-              <Text style={{ color: 'var(--color-muted)' }}>
-                Interlace pages from two PDFs in a single, responsive workspace.
-              </Text>
-            </View>
-            <Pressable
-              onPress={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-              style={({ pressed }) => ({
-                paddingVertical: 10,
-                paddingHorizontal: 16,
-                borderRadius: 999,
-                backgroundColor: pressed ? 'rgba(56, 189, 248, 0.45)' : 'rgba(56, 189, 248, 0.25)',
-              })}
-            >
-              <Text style={{ color: 'var(--color-text)', fontWeight: '600' }}>
-                Switch to {theme === 'dark' ? 'light' : 'dark'} mode
-              </Text>
-            </Pressable>
-          </View>
+    <div className="min-h-screen bg-background">
+      <header className="border-b bg-card/50">
+        <div className="container flex items-center justify-between gap-2 py-6">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Dupl3x PDF Interleaver</h1>
+            <p className="text-muted-foreground">
+              Upload two PDFs, choose the order, and generate an interleaved result instantly.
+            </p>
+          </div>
+          <ThemeToggle />
+        </div>
+      </header>
 
-          <View style={{ flexDirection: 'row', gap: 16, flexWrap: 'wrap' }}>
-            <Pressable
-              onPress={() => setActiveTab('workspace')}
-              style={({ pressed }) => ({
-                paddingVertical: 10,
-                paddingHorizontal: 18,
-                borderRadius: 999,
-                backgroundColor:
-                  activeTab === 'workspace'
-                    ? 'rgba(56, 189, 248, 0.85)'
-                    : pressed
-                    ? 'rgba(148, 163, 184, 0.25)'
-                    : 'rgba(15, 23, 42, 0.45)',
-              })}
-            >
-              <Text style={{
-                color: activeTab === 'workspace' ? '#0f172a' : 'var(--color-text)',
-                fontWeight: '600',
-              }}>
-                Workspace
-              </Text>
-            </Pressable>
-            <Pressable
-              onPress={() => setActiveTab('settings')}
-              style={({ pressed }) => ({
-                paddingVertical: 10,
-                paddingHorizontal: 18,
-                borderRadius: 999,
-                backgroundColor:
-                  activeTab === 'settings'
-                    ? 'rgba(59, 130, 246, 0.85)'
-                    : pressed
-                    ? 'rgba(148, 163, 184, 0.25)'
-                    : 'rgba(15, 23, 42, 0.45)',
-              })}
-            >
-              <Text style={{
-                color: activeTab === 'settings' ? '#0f172a' : 'var(--color-text)',
-                fontWeight: '600',
-              }}>
-                Settings
-              </Text>
-            </Pressable>
-          </View>
+      <main className="container space-y-6 py-10">
+        {error && (
+          <Alert variant="destructive">
+            <div className="flex items-start gap-2">
+              <AlertOctagon className="mt-0.5 h-4 w-4" />
+              <div>
+                <AlertTitle>Error</AlertTitle>
+                <AlertDescription>{error}</AlertDescription>
+              </div>
+            </div>
+          </Alert>
+        )}
 
-          {statusMessage && (
-            <Banner intent="success" message={statusMessage} onDismiss={() => setStatusMessage(null)} />
-          )}
-          {errorMessage && (
-            <Banner intent="danger" message={errorMessage} onDismiss={() => setErrorMessage(null)} />
-          )}
+        {successMessage && (
+          <Alert>
+            <AlertTitle>Success</AlertTitle>
+            <AlertDescription>{successMessage}</AlertDescription>
+          </Alert>
+        )}
 
-          {activeTab === 'workspace' ? renderWorkspace() : renderSettings()}
-        </View>
-      </ScrollView>
-    </SafeAreaView>
-  )
+        <Card>
+          <CardHeader>
+            <CardTitle>Upload PDFs</CardTitle>
+            <CardDescription>Select the two PDF documents to interleave.</CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-6 md:grid-cols-2">
+            <FileDropZone
+              id="first-pdf"
+              label="First PDF"
+              selectedFile={firstFile}
+              onFileSelect={setFirstFile}
+              formatBytes={formatBytes}
+            />
+            <FileDropZone
+              id="second-pdf"
+              label="Second PDF"
+              selectedFile={secondFile}
+              onFileSelect={setSecondFile}
+              formatBytes={formatBytes}
+            />
+          </CardContent>
+          <CardFooter className="flex flex-wrap items-center justify-between gap-4">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium">Order:</span>
+              <div className="flex rounded-md border">
+                <Button
+                  variant={order === "first_second" ? "default" : "ghost"}
+                  className="rounded-none rounded-l-md"
+                  onClick={() => setOrder("first_second")}
+                >
+                  First → Second
+                </Button>
+                <Separator orientation="vertical" />
+                <Button
+                  variant={order === "second_first" ? "default" : "ghost"}
+                  className="rounded-none rounded-r-md"
+                  onClick={() => setOrder("second_first")}
+                >
+                  Second → First
+                </Button>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleSwapFiles}
+                disabled={!firstFile && !secondFile}
+              >
+                <RefreshCcw className="mr-2 h-4 w-4" />
+                Swap uploads
+              </Button>
+              <Button type="button" variant="outline" onClick={handleReset}>
+                <RotateCcw className="mr-2 h-4 w-4" />
+                Reset
+              </Button>
+              <Button
+                type="button"
+                onClick={handleProcess}
+                disabled={!canProcess}
+              >
+                {isProcessing ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Processing…
+                  </>
+                ) : (
+                  <>
+                    <Download className="mr-2 h-4 w-4" />
+                    Process
+                  </>
+                )}
+              </Button>
+            </div>
+          </CardFooter>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Preferences</CardTitle>
+            <CardDescription>
+              Save your preferred default order for future sessions.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div>
+              <p className="text-sm font-medium">Current selection</p>
+              <p className="text-sm text-muted-foreground">{orderLabel}</p>
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">
+                Default order:{" "}
+                <span className="font-medium">
+                  {defaultOrder === "first_second" ? "First PDF first" : "Second PDF first"}
+                </span>
+              </p>
+            </div>
+          </CardContent>
+          <CardFooter>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={handleSaveDefaultOrder}
+              disabled={isSavingSettings}
+            >
+              {isSavingSettings ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Saving…
+                </>
+              ) : (
+                <>
+                  <ArrowUpDown className="mr-2 h-4 w-4" />
+                  Save as default order
+                </>
+              )}
+            </Button>
+          </CardFooter>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Recent Activity</CardTitle>
+            <CardDescription>
+              A log of the most recent processing operations.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-muted-foreground">
+                {loadingLogs ? "Refreshing logs…" : `Showing ${logs.length} entr${logs.length === 1 ? "y" : "ies"}.`}
+              </p>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowClearLogsDialog(true)}
+                  disabled={loadingLogs || logs.length === 0}
+                >
+                  <Trash2 className="mr-2 h-3.5 w-3.5" />
+                  Clear All
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => refreshLogs()}
+                  disabled={loadingLogs}
+                >
+                  {loadingLogs ? (
+                    <>
+                      <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
+                      Updating…
+                    </>
+                  ) : (
+                    <>
+                      <RefreshCcw className="mr-2 h-3.5 w-3.5" />
+                      Refresh
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+            <div className="overflow-hidden rounded-md border">
+              <table className="w-full table-fixed border-collapse text-sm">
+                <thead className="bg-muted/50">
+                  <tr>
+                    <th className="p-3 text-left font-medium">Timestamp</th>
+                    <th className="p-3 text-left font-medium">First PDF</th>
+                    <th className="p-3 text-left font-medium">Second PDF</th>
+                    <th className="p-3 text-left font-medium">Order</th>
+                    <th className="p-3 text-left font-medium">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {logs.length === 0 && (
+                    <tr>
+                      <td className="p-4 text-center text-muted-foreground" colSpan={5}>
+                        No logs yet. Process your first set of PDFs above.
+                      </td>
+                    </tr>
+                  )}
+                  {logs.map((log) => (
+                    <tr key={log.id} className="border-t">
+                      <td className="truncate p-3">{new Date(log.created_at).toLocaleString()}</td>
+                      <td className="truncate p-3">{log.first_pdf_name}</td>
+                      <td className="truncate p-3">{log.second_pdf_name}</td>
+                      <td className="p-3">
+                        {log.swapped_order ? "Second → First" : "First → Second"}
+                      </td>
+                      <td className="p-3">
+                        <span
+                          className={
+                            log.status === "completed"
+                              ? "font-medium text-emerald-600"
+                              : log.status === "pending"
+                                ? "text-muted-foreground"
+                                : "font-medium text-destructive"
+                          }
+                        >
+                          {log.status}
+                        </span>
+                        {log.error_message && (
+                          <p className="text-xs text-destructive">{log.error_message}</p>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
+      </main>
+
+      <Dialog open={showFilenameDialog} onOpenChange={setShowFilenameDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Name Your Output File</DialogTitle>
+            <DialogDescription>
+              Enter a filename for the interleaved PDF. The .pdf extension will be added automatically if not included.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="filename">Filename</Label>
+              <Input
+                id="filename"
+                value={outputFilename}
+                onChange={(e) => setOutputFilename(e.target.value)}
+                placeholder="interleaved.pdf"
+                disabled={isProcessing}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !isProcessing) {
+                    void handleConfirmProcess();
+                  }
+                }}
+              />
+            </div>
+            {isProcessing && (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">Processing...</span>
+                </div>
+                <Progress className="h-2" />
+              </div>
+            )}
+          </div>
+          <DialogFooter className="sm:justify-between">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setShowFilenameDialog(false)}
+              disabled={isProcessing}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              onClick={() => void handleConfirmProcess()}
+              disabled={isProcessing || !outputFilename.trim()}
+            >
+              {isProcessing ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Processing...
+                </>
+              ) : (
+                <>
+                  <Download className="mr-2 h-4 w-4" />
+                  Confirm & Process
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showClearLogsDialog} onOpenChange={setShowClearLogsDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Clear All Logs?</DialogTitle>
+            <DialogDescription>
+              This will permanently delete all {logs.length} processing log{logs.length === 1 ? "" : "s"}. This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="sm:justify-between">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setShowClearLogsDialog(false)}
+              disabled={isClearingLogs}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={() => void handleClearLogs()}
+              disabled={isClearingLogs}
+            >
+              {isClearingLogs ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Clearing...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Clear All Logs
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
 }
 
-export default App
+export default App;

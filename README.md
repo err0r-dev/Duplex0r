@@ -1,99 +1,391 @@
-# Dupl3x
+# Dupl3x PDF Interleaver
 
-Dupl3x is a lightweight duplexing assistant for the desktop that blends a Python/FastAPI backend, a React + React Native Web frontend, and a PostgreSQL event log. Upload two PDFs, reorder them with drag and drop, preview the merged result, and download an interlaced document that alternates pages from each source file.
+![Version](https://img.shields.io/badge/version-0.5.0-blue.svg)
+![Python](https://img.shields.io/badge/python-3.13+-green.svg)
+![Node](https://img.shields.io/badge/node-18.18+-green.svg)
+![License](https://img.shields.io/badge/license-MIT-blue.svg)
 
-## Project layout
+Dupl3x is a modern, full-stack web application for interleaving PDF documents. Upload two PDFs, choose the page order, and download a merged result where pages alternate between your documents. Perfect for combining odd/even scanned pages, merging duplex scans, or any scenario requiring page-by-page interleaving.
+
+The FastAPI backend handles PDF processing, activity logging, and settings storage (PostgreSQL-ready with SQLite fallback), while the React + Vite frontend offers an intuitive drag-and-drop interface with dark/light theme support.
+
+## Features
+
+### PDF Processing
+- **Page-by-page interleaving** - Merge two PDFs by alternating pages
+- **Flexible ordering** - Choose "First→Second" or "Second→First" page order
+- **Custom filenames** - Specify your own output filename with smart suggestions
+- **Instant download** - Processed PDFs download directly to your browser
+- **Automatic .pdf extension** - Ensures proper file naming
+
+### User Interface
+- **Drag-and-drop upload** - Intuitive file zones for both PDFs with visual feedback
+- **Click-to-browse fallback** - Traditional file picker as alternative
+- **File validation** - Accepts only PDF files with clear error messages
+- **File swap functionality** - Quick button to exchange the two uploaded files
+- **Dark/light theme** - System-aware with manual toggle
+- **Responsive design** - Works on desktop, tablet, and mobile
+- **Progress indication** - Visual feedback during processing
+- **Confirmation dialogs** - Prevents accidental actions
+
+### Settings & History
+- **Persistent preferences** - Save your default page order
+- **Activity log** - Complete history of all processing operations
+- **Detailed tracking** - Timestamp, filenames, order, and status for each operation
+- **Error capture** - View detailed error messages for failed operations
+- **Clear logs** - Remove all history with confirmation
+- **Real-time refresh** - Manual refresh button for activity log
+
+### Developer Experience
+- **One-command startup** - Single script installs everything and starts both servers
+- **One-command shutdown** - Clean process termination
+- **Automatic database setup** - No manual schema creation needed
+- **Hot reload** - Frontend HMR and backend auto-reload
+- **Comprehensive logging** - Separate log files for debugging
+
+## Project Structure
 
 ```
-backend/   FastAPI application, database models, and PDF handling utilities
-frontend/  React (Vite) app using React Native Web components and DnD previews
-scripts/   Automation helpers to start/stop every service locally
+Dupl3x/
+├── backend/api/           # FastAPI backend application
+│   ├── app/
+│   │   ├── routers/       # API endpoint handlers
+│   │   │   ├── processing.py  # PDF interleaving endpoint
+│   │   │   ├── logs.py        # Activity log endpoints
+│   │   │   └── settings.py    # User settings endpoints
+│   │   ├── services/      # Business logic
+│   │   │   └── pdf.py         # PDF interleaving service
+│   │   ├── models.py      # SQLAlchemy database models
+│   │   ├── schemas.py     # Pydantic request/response schemas
+│   │   ├── database.py    # Database configuration
+│   │   └── main.py        # FastAPI application setup
+│   ├── data/              # Runtime data (gitignored)
+│   │   ├── app.db         # SQLite database
+│   │   └── output/        # Generated PDF files
+│   └── tests/             # Backend tests
+├── frontend/              # React frontend application
+│   ├── src/
+│   │   ├── components/
+│   │   │   ├── ui/        # shadcn/ui components
+│   │   │   ├── FileDropZone.tsx   # Drag-and-drop component
+│   │   │   ├── theme-provider.tsx # Theme management
+│   │   │   └── theme-toggle.tsx   # Theme switcher
+│   │   ├── lib/           # Utility functions
+│   │   ├── App.tsx        # Main application component
+│   │   ├── main.tsx       # React entry point
+│   │   └── index.css      # Global styles and theme
+│   └── public/            # Static assets
+├── scripts/
+│   ├── start.py           # Start both servers with one command
+│   └── stop.py            # Stop both servers cleanly
+└── .dupl3x/               # Runtime artifacts (gitignored)
+    ├── pids.json          # Process IDs for management
+    ├── backend.log        # Backend application logs
+    └── frontend.log       # Frontend development logs
 ```
-
-Additional top-level assets include a reproducible change log (`CHANGELOG.md`), Docker Compose configuration for PostgreSQL, and workspace-level ignores.
 
 ## Prerequisites
 
-- [Docker](https://docs.docker.com/get-docker/) (preferred for the PostgreSQL instance)
-- [uv](https://docs.astral.sh/uv/) `0.8+`
-- Node.js `>=20.19` (Vite emits warnings on older runtimes)
-- npm (bundled with Node.js)
-- `lsof` (used to probe open ports; bundled with macOS, otherwise install via your package manager)
+- **Python 3.13 or higher** - [Download Python](https://www.python.org/downloads/)
+- **[uv](https://github.com/astral-sh/uv)** - Fast Python package manager (install with `pip install uv`)
+- **Node.js 18.18 or higher** - Node 20+ recommended ([Download Node.js](https://nodejs.org/))
+- **npm** - Ships with Node.js
+- **PostgreSQL** (optional) - For production deployments; SQLite used by default
 
-If Docker (or Docker Compose) is unavailable, the start helper falls back to a local PostgreSQL cluster. On macOS it will attempt to install `postgresql@16` via Homebrew automatically, otherwise you will need to provision PostgreSQL manually and rerun the script. The helper probes ports `5432-5450` (for both Docker and the local fallback) and exports `DUPL3X_DATABASE_PORT` for the backend so existing installations aren’t disrupted.
+## Quick Start
 
-The start script will install missing frontend dependencies automatically and `uv run` will materialise the Python virtual environment on demand.
-
-## Quick start
-
-From the repository root:
+### 1. Start the Application
 
 ```bash
-./scripts/start.sh
+python scripts/start.py
 ```
 
-The helper script orchestrates everything that is needed:
+This single command will:
+- Install Python dependencies with `uv sync`
+- Install frontend dependencies with `npm install`
+- Create the SQLite database automatically
+- Start the FastAPI backend on port 8000
+- Start the Vite dev server on port 5173
+- Open your browser to http://localhost:5173
 
-1. Bootstraps PostgreSQL via Docker Compose (default credentials `postgres/postgres`, database `dupl3x`). If Docker/Compose is missing, it provisions a local PostgreSQL cluster under `.postgres-data-local/`. In either case it selects the first free port in the `5432-5450` range and shares it through `DUPL3X_DATABASE_PORT`.
-2. Syncs backend dependencies with UV, launches the FastAPI server, and writes logs to `logs/backend.log`.
-3. Runs `npm install` to guarantee frontend packages are present, starts the Vite dev server, and writes logs to `logs/frontend.log`.
-4. Opens the default browser to [`http://localhost:5173`](http://localhost:5173). If automatic launch fails, open that URL manually.
+### 2. Use the Application
 
-Set `USE_LOCAL_DB=true ./scripts/start.sh` to force the local PostgreSQL path even when Docker is installed. Provide a custom port with `DUPL3X_DATABASE_PORT=5433 ./scripts/start.sh` if you need something outside the default scan range.
+1. **Upload PDFs** - Drag and drop two PDF files or click to browse
+2. **Choose Order** - Select "First→Second" or "Second→First"
+3. **Click Process** - Enter a filename and confirm
+4. **Download** - Your interleaved PDF downloads automatically
 
-When you are done, shut everything down and clean up processes with:
+### 3. Stop the Application
 
 ```bash
-./scripts/stop.sh
+python scripts/stop.py
 ```
 
-The stop script stops the frontend and backend processes tracked in `scripts/.processes` and tears down the PostgreSQL container.
+This cleanly terminates both servers and removes PID files.
 
-## Application flow
+## Manual Commands
 
-1. **Upload & preview** – Select exactly two PDFs. Dupl3x stores them under a per-session folder (ignored by git) and displays the first page of each document for quick visual validation.
-2. **Reorder** – Drag and drop the cards to re-sequence the input. Click *Confirm order* to persist the new sequence in PostgreSQL.
-3. **Interlace** – Provide (or keep) a target filename, interlace the pages, preview the generated document, and download it.
-4. **Reset** – Clear the workspace at any time to remove uploaded PDFs and generated artefacts while keeping the action log intact.
+If you prefer running components separately:
 
-All user actions and server-side failures are logged to PostgreSQL tables with UUID primary keys. Frontend exceptions are bubbled to the backend through `/api/logs/errors` for a single source of truth.
+### Backend Only
+```bash
+uv run uvicorn backend.api.app.main:app --host 0.0.0.0 --port 8000 --reload
+```
 
-## Backend notes
+### Frontend Only
+```bash
+cd frontend
+npm install
+VITE_API_BASE_URL=http://localhost:8000/api npm run dev -- --host 0.0.0.0 --port 5173
+```
 
-- Service entrypoint: `uvicorn app.main:app --host 0.0.0.0 --port 8000`
-- Dependencies managed via `backend/pyproject.toml` (UV). Use `uv run --project backend ...` for ad-hoc commands.
-- Uploaded files live in `backend/storage/<session-id>` and are never committed. Generated PDFs follow the same rule.
-- Database schema: `sessions`, `session_files`, `interlaced_jobs`, `action_logs`, and `error_logs` tables—each uses `UUID` primary keys.
+### Run Tests
+```bash
+# Backend unit tests
+uvx pytest backend/api/tests/test_pdf.py
 
-## Frontend notes
+# Backend smoke test
+uv run python -c "from backend.api.app.main import app; print('App loaded:', bool(app))"
 
-- Built with Vite + React + TypeScript and React Native Web components for responsive design.
-- Drag and drop powered by `@dnd-kit`, PDF previews via `react-pdf` (PDF.js).
-- Dark mode toggles at runtime; theme state is stored in `document.body.dataset.theme`.
-- Proxying is configured in `vite.config.ts` so `/api` calls during development route to `http://localhost:8000` automatically.
+# Frontend build verification
+cd frontend && npm run build
+```
 
-## Keeping credentials visible
+## Configuration
 
-The **Settings** tab in the UI surfaces the default local database connection details (host, port, user, password, database). They are also reflected in `backend/.env.example` should you need to override them.
+### Environment Variables
 
-## Logs & troubleshooting
+| Variable | Description | Default | Example |
+| --- | --- | --- | --- |
+| `DATABASE_URL` | Database connection string (async SQLAlchemy format). Falls back to SQLite when unset. | `sqlite+aiosqlite:///backend/api/data/app.db` | `postgresql+asyncpg://user:password@localhost:5432/dupl3x` |
+| `BACKEND_PORT` | Port for FastAPI backend server | `8000` | `8080` |
+| `FRONTEND_PORT` | Port for Vite development server | `5173` | `3000` |
+| `VITE_API_BASE_URL` | API base URL for frontend (auto-set by start.py) | `http://localhost:8000/api` | `https://api.example.com/api` |
 
-- Backend logs: `logs/backend.log`
-- Frontend logs: `logs/frontend.log`
-- Docker/PostgreSQL logs: `docker compose logs db`
+### Database Configuration
 
-## Known issues (0.0.1)
+**SQLite (Default):**
+- No setup required - database created automatically
+- Location: `backend/api/data/app.db`
+- Perfect for development and personal use
 
-- Backend startup currently fails with import and schema errors when launched through `scripts/start.sh`, which surfaces in the UI as “Unable to start a new session”. Inspect `logs/backend.log` for the active traceback before attempting further work.
-- Even with automatic port probing, other PostgreSQL instances binding to ports in the 5432–5450 range can prevent the helper from provisioning the database. Set `DUPL3X_DATABASE_PORT` manually if the script exits early.
-- Frontend flows (upload, order, interlace) are blocked until the backend issues are resolved; expect incomplete sessions and missing job previews.
+**PostgreSQL (Production):**
+```bash
+export DATABASE_URL="postgresql+asyncpg://username:password@localhost:5432/dupl3x"
+python scripts/start.py
+```
 
-If you encounter issues while the UI is open, they will appear inline as banners and the frontend will push the error context to the backend logging endpoint for persistence.
+Schema is created automatically on first startup.
 
-## Development tips
+### Output Files
 
-- Use `uv run --project backend pytest` for tests once they are added.
-- `npm run dev` (frontend) and `uv run --project backend uvicorn app.main:app --reload` can be executed manually if you prefer decoupled workflows.
-- Avoid committing database volumes (`.postgres-data/`) or generated PDFs—`.gitignore` protects these paths by default.
+Processed PDF files are saved to:
+```
+backend/api/data/output/
+```
 
-Refer to `CHANGELOG.md` for a concise summary of historical changes.
+**Note:** This directory is excluded from git. Consider implementing a cleanup strategy for production deployments.
+
+## User Interface
+
+### Main Interface
+- **Header** - Application title with theme toggle button
+- **Upload Section** - Two drag-and-drop zones for PDF files
+- **Order Controls** - Toggle between "First→Second" and "Second→First"
+- **Action Buttons** - Swap files, Reset form, Process PDFs
+- **Settings Panel** - Save default order preference
+- **Activity Log** - Complete processing history with Clear All option
+
+### Dialogs
+- **Filename Dialog** - Enter custom output filename before processing
+- **Progress Dialog** - Shows processing status with progress bar
+- **Clear Logs Confirmation** - Prevents accidental data loss
+
+### Theme
+- **Light Mode** - Clean white background with green accents
+- **Dark Mode** - Dark background with adjusted colors
+- **System Detection** - Automatically matches your OS theme
+- **Manual Toggle** - Sun/moon icon in header
+
+## API Overview
+
+### Endpoints
+
+| Method | Endpoint | Description |
+| --- | --- | --- |
+| `POST` | `/api/process/` | Upload two PDFs (`first_pdf`, `second_pdf`) plus an `order` field. Returns interleaved PDF. |
+| `GET` | `/api/logs/` | Retrieve processing history with timestamps and status. |
+| `DELETE` | `/api/logs/` | Clear all processing logs (requires confirmation in UI). |
+| `GET` | `/api/settings/` | Fetch current default order preference. |
+| `POST` | `/api/settings/` | Update default order preference. |
+| `GET` | `/health` | Health check endpoint (returns `{"status": "ok"}`). |
+
+### Example API Usage
+
+**Process PDFs:**
+```bash
+curl -X POST http://localhost:8000/api/process/ \
+  -F "first_pdf=@document1.pdf" \
+  -F "second_pdf=@document2.pdf" \
+  -F "order=first_second" \
+  --output result.pdf
+```
+
+**Get Processing History:**
+```bash
+curl http://localhost:8000/api/logs/
+```
+
+**Update Settings:**
+```bash
+curl -X POST http://localhost:8000/api/settings/ \
+  -H "Content-Type: application/json" \
+  -d '{"default_order": "second_first"}'
+```
+
+## Technology Stack
+
+### Backend
+- **FastAPI** - Modern Python web framework
+- **SQLAlchemy** (async) - ORM with async support
+- **PyPDF** - PDF manipulation
+- **Uvicorn** - ASGI server
+- **Pydantic** - Data validation
+- **pytest** - Testing framework
+
+### Frontend
+- **React 18** - UI library with hooks
+- **TypeScript** - Type-safe JavaScript
+- **Vite** - Build tool and dev server
+- **Tailwind CSS** - Utility-first styling
+- **shadcn/ui** - Component library (Radix UI)
+- **next-themes** - Theme management
+- **Lucide React** - Icon library
+
+### Database
+- **SQLite** - Default (development)
+- **PostgreSQL** - Production-ready option
+
+## Troubleshooting
+
+### Port Already in Use
+If ports 8000 or 5173 are taken:
+```bash
+# Use different ports
+export BACKEND_PORT=8080
+export FRONTEND_PORT=3000
+python scripts/start.py
+```
+
+### Database Locked Error
+If you see "database is locked":
+- Stop the application: `python scripts/stop.py`
+- Remove lock: `rm backend/api/data/app.db-journal`
+- Restart: `python scripts/start.py`
+
+### Module Not Found
+If you see import errors:
+```bash
+# Reinstall dependencies
+uv sync --force
+cd frontend && npm install
+```
+
+### Permission Errors
+If you see permission denied:
+```bash
+# Linux/macOS - Make scripts executable
+chmod +x scripts/start.py scripts/stop.py
+```
+
+### Clear All Data
+To reset the application:
+```bash
+python scripts/stop.py
+rm -rf backend/api/data/
+rm -rf .dupl3x/
+python scripts/start.py
+```
+
+### Browser Doesn't Open
+If the browser doesn't open automatically:
+- Manually navigate to http://localhost:5173
+- Check if ports are accessible: `curl http://localhost:8000/health`
+
+## Security Considerations
+
+- Database files are excluded from version control via `.gitignore`
+- Uploaded PDFs are excluded from version control
+- Environment files (`.env`) are excluded from git
+- No authentication implemented - suitable for local/trusted networks only
+- Consider adding authentication for public deployments
+
+## Development
+
+### Adding New Features
+
+1. **Backend routes:** Add to `backend/api/app/routers/`
+2. **Frontend components:** Add to `frontend/src/components/`
+3. **Database models:** Update `backend/api/app/models.py`
+4. **Tests:** Add to `backend/api/tests/`
+
+### Customizing Themes
+
+Edit `frontend/src/index.css` to modify:
+- Color variables (`:root` and `.dark` sections)
+- Font families
+- Border radius
+- Shadow styles
+
+### Building for Production
+
+```bash
+# Build frontend
+cd frontend
+npm run build
+
+# Serve static files with FastAPI
+# Add static file mounting in backend/api/app/main.py
+```
+
+## Known Limitations
+
+- Maximum file size depends on browser memory
+- Processing is synchronous (one operation at a time)
+- Output files not automatically cleaned up
+- No user authentication
+- No cloud storage integration
+
+## Future Roadmap
+
+- Batch processing support
+- Real-time progress via WebSockets
+- Custom page selection (not just alternating)
+- PDF preview before download
+- Cloud storage integration (S3, etc.)
+- User authentication and multi-user support
+- Docker containerization
+- Processing history export (CSV/JSON)
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## License
+
+This project is licensed under the MIT License.
+
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) for version history and release notes.
+
+## Support
+
+For issues and questions:
+- Open an issue on GitHub
+- Check the Troubleshooting section above
+- Review logs in `.dupl3x/backend.log` and `.dupl3x/frontend.log`
+
+---
+
+**Version 0.5.0** - First production-ready release with all core features functional and tested.

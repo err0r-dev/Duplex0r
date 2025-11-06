@@ -1,28 +1,34 @@
-# Node and frontend artifacts
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.python-version
+
+# uv
+.uv/
+
+# Frontend
 frontend/node_modules/
 frontend/dist/
+frontend/.vite/
 
-# Python virtual environments
-backend/.venv/
-.venv/
+# App state
+.dupl3x/
 
-# UV cache
-.uv-cache/
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+backend/api/data/
 
-# Database volumes
-.postgres-data/
-.postgres-data-local/
+# Environment files
+.env
+.env.local
+.env.*.local
 
-# Runtime storage and logs
-backend/storage/*
-!backend/storage/.gitkeep
-logs/
+# Log files
+*.log
 
-# PID tracking
-scripts/.processes
-
-# Generated PDFs or temporary files
-*.pdf
-
-# macOS / system files
+# macOS
 .DS_Store
