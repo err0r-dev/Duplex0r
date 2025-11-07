@@ -373,7 +373,3 @@ For issues and questions:
 - Open an issue on GitHub
 - Check the Troubleshooting section above
 - Review logs in `.dupl3x/backend.log` and `.dupl3x/frontend.log`
-
----
-
-**Version 0.5.0** - First production-ready release with all core features functional and tested.
