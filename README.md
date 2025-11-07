@@ -3,7 +3,6 @@
 ![Version](https://img.shields.io/badge/version-0.5.0-blue.svg)
 ![Python](https://img.shields.io/badge/python-3.13+-green.svg)
 ![Node](https://img.shields.io/badge/node-18.18+-green.svg)
-![License](https://img.shields.io/badge/license-MIT-blue.svg)
 
 Dupl3x is a modern, full-stack web application for interleaving PDF documents. Upload two PDFs, choose the page order, and download a merged result where pages alternate between your documents. Perfect for combining odd/even scanned pages, merging duplex scans, or any scenario requiring page-by-page interleaving.
 
@@ -356,24 +355,13 @@ npm run build
 - No user authentication
 - No cloud storage integration
 
-## Future Roadmap
-
-- Batch processing support
-- Real-time progress via WebSockets
-- Custom page selection (not just alternating)
-- PDF preview before download
-- Cloud storage integration (S3, etc.)
-- User authentication and multi-user support
-- Docker containerization
-- Processing history export (CSV/JSON)
-
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## License
 
-This project is licensed under the MIT License.
+This project is licensed under the [ERR0R.DEV OPEN USE LICENSE](https://github.com/err0r-dev/.github/blob/main/profile/license.md).
 
 ## Changelog
 
