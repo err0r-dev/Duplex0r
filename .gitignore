@@ -21,6 +21,7 @@ frontend/.vite/
 *.sqlite
 *.sqlite3
 backend/api/data/
+postgres-data-local/
 
 # Environment files
 .env

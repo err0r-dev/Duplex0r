@@ -5,7 +5,37 @@ All notable changes to Dupl3x PDF Interleaver will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.5.0] - 2024-11-06
+## [0.6.0] - 2025-11-13
+
+### Added
+
+#### Reverse Page Order Feature
+
+- **Reverse page order checkboxes** - Added checkboxes under each PDF upload zone to reverse page order before interleaving
+- **Duplex scanning support** - Perfect for handling back-side scans where pages are in reverse order after flipping the stack
+- **Independent control** - Each PDF can be reversed independently via its own checkbox
+- **State persistence** - Reverse settings are maintained when swapping files and cleared on reset
+- **Backend processing** - Enhanced `interleave_pdfs()` function with `reverse_a` and `reverse_b` parameters
+- **API parameters** - Added `reverse_first` and `reverse_second` form fields to `/api/process/` endpoint
+
+#### UI Components
+
+- **Checkbox component** - Added shadcn/ui Checkbox component based on Radix UI
+- **Accessible labels** - Clear labels explaining the reverse functionality
+- **Intuitive placement** - Checkboxes positioned directly under each PDF upload zone
+
+### Changed
+
+- **API documentation** - Updated curl examples to include the new reverse parameters
+- **README** - Enhanced documentation with duplex scanning use case
+
+### Technical Details
+
+- Frontend: Added checkbox state management with `reverseFirstPdf` and `reverseSecondPdf` state variables
+- Backend: Modified PDF service to reverse page arrays before interleaving when flags are set
+- API: Extended form data handling to accept and process reverse flags as boolean values
+
+## [0.5.0] - 2025-11-06
 
 ### Initial Release
 

@@ -1,6 +1,6 @@
 # Dupl3x PDF Interleaver
 
-![Version](https://img.shields.io/badge/version-0.5.0-blue.svg)
+![Version](https://img.shields.io/badge/version-0.6.0-blue.svg)
 ![Python](https://img.shields.io/badge/python-3.13+-green.svg)
 ![Node](https://img.shields.io/badge/node-18.18+-green.svg)
 
@@ -13,6 +13,7 @@ The FastAPI backend handles PDF processing, activity logging, and settings stora
 ### PDF Processing
 - **Page-by-page interleaving** - Merge two PDFs by alternating pages
 - **Flexible ordering** - Choose "First→Second" or "Second→First" page order
+- **Reverse page order** - Optional checkboxes to reverse each PDF before interleaving (perfect for duplex scanning)
 - **Custom filenames** - Specify your own output filename with smart suggestions
 - **Instant download** - Processed PDFs download directly to your browser
 - **Automatic .pdf extension** - Ensures proper file naming
@@ -110,9 +111,10 @@ This single command will:
 ### 2. Use the Application
 
 1. **Upload PDFs** - Drag and drop two PDF files or click to browse
-2. **Choose Order** - Select "First→Second" or "Second→First"
-3. **Click Process** - Enter a filename and confirm
-4. **Download** - Your interleaved PDF downloads automatically
+2. **Reverse Pages (Optional)** - Check the boxes to reverse page order for duplex scanning
+3. **Choose Order** - Select "First→Second" or "Second→First"
+4. **Click Process** - Enter a filename and confirm
+5. **Download** - Your interleaved PDF downloads automatically
 
 ### 3. Stop the Application
 
@@ -189,7 +191,7 @@ backend/api/data/output/
 
 ### Main Interface
 - **Header** - Application title with theme toggle button
-- **Upload Section** - Two drag-and-drop zones for PDF files
+- **Upload Section** - Two drag-and-drop zones for PDF files with reverse page order checkboxes
 - **Order Controls** - Toggle between "First→Second" and "Second→First"
 - **Action Buttons** - Swap files, Reset form, Process PDFs
 - **Settings Panel** - Save default order preference
@@ -212,7 +214,7 @@ backend/api/data/output/
 
 | Method | Endpoint | Description |
 | --- | --- | --- |
-| `POST` | `/api/process/` | Upload two PDFs (`first_pdf`, `second_pdf`) plus an `order` field. Returns interleaved PDF. |
+| `POST` | `/api/process/` | Upload two PDFs (`first_pdf`, `second_pdf`) plus `order`, `reverse_first`, and `reverse_second` fields. Returns interleaved PDF. |
 | `GET` | `/api/logs/` | Retrieve processing history with timestamps and status. |
 | `DELETE` | `/api/logs/` | Clear all processing logs (requires confirmation in UI). |
 | `GET` | `/api/settings/` | Fetch current default order preference. |
@@ -227,6 +229,8 @@ curl -X POST http://localhost:8000/api/process/ \
   -F "first_pdf=@document1.pdf" \
   -F "second_pdf=@document2.pdf" \
   -F "order=first_second" \
+  -F "reverse_first=false" \
+  -F "reverse_second=true" \
   --output result.pdf
 ```
 
