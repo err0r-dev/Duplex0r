@@ -20,6 +20,8 @@ async def process_pdfs(
     first_pdf: UploadFile = File(..., description="First PDF file"),
     second_pdf: UploadFile = File(..., description="Second PDF file"),
     order: str = Form("first_second", pattern="^(first_second|second_first)$"),
+    reverse_first: str = Form("false", description="Reverse first PDF pages"),
+    reverse_second: str = Form("false", description="Reverse second PDF pages"),
     session: AsyncSession = Depends(get_session),
 ):
     settings = get_settings()
@@ -27,9 +29,14 @@ async def process_pdfs(
     pdf_a = await first_pdf.read()
     pdf_b = await second_pdf.read()
 
+    # Convert string booleans to actual booleans
+    reverse_a = reverse_first.lower() == "true"
+    reverse_b = reverse_second.lower() == "true"
+
     swapped = order == "second_first"
     if swapped:
         pdf_a, pdf_b = pdf_b, pdf_a
+        reverse_a, reverse_b = reverse_b, reverse_a
 
     log_entry = ProcessingLog(
         created_at=dt.datetime.utcnow(),
@@ -43,7 +50,7 @@ async def process_pdfs(
     await session.flush()
 
     try:
-        merged_bytes, filename = interleave_pdfs(pdf_a, pdf_b)
+        merged_bytes, filename = interleave_pdfs(pdf_a, pdf_b, reverse_a, reverse_b)
     except PDFProcessingError as exc:
         log_entry.status = "error"
         log_entry.error_message = str(exc)

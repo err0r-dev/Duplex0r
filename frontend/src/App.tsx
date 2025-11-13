@@ -12,6 +12,7 @@ import {
   CardHeader,
   CardTitle,
 } from "./components/ui/card";
+import { Checkbox } from "./components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -60,6 +61,8 @@ const extractFilename = (header: string | null, fallback = "interleaved.pdf") =>
 function App() {
   const [firstFile, setFirstFile] = useState<File | null>(null);
   const [secondFile, setSecondFile] = useState<File | null>(null);
+  const [reverseFirstPdf, setReverseFirstPdf] = useState(false);
+  const [reverseSecondPdf, setReverseSecondPdf] = useState(false);
   const [order, setOrder] = useState<Order>("first_second");
   const [defaultOrder, setDefaultOrder] = useState<Order>("first_second");
   const [logs, setLogs] = useState<ProcessingLog[]>([]);
@@ -143,8 +146,12 @@ function App() {
     setSuccessMessage(null);
     const currentFirst = firstFile;
     const currentSecond = secondFile;
+    const currentReverseFirst = reverseFirstPdf;
+    const currentReverseSecond = reverseSecondPdf;
     setFirstFile(currentSecond);
     setSecondFile(currentFirst);
+    setReverseFirstPdf(currentReverseSecond);
+    setReverseSecondPdf(currentReverseFirst);
     setOrder((prev) => (prev === "first_second" ? "second_first" : "first_second"));
   };
 
@@ -189,6 +196,8 @@ function App() {
       formData.append("first_pdf", firstFile);
       formData.append("second_pdf", secondFile);
       formData.append("order", order);
+      formData.append("reverse_first", String(reverseFirstPdf));
+      formData.append("reverse_second", String(reverseSecondPdf));
 
       const response = await fetch(`${API_BASE_URL}/process/`, {
         method: "POST",
@@ -225,6 +234,8 @@ function App() {
   const handleReset = () => {
     setFirstFile(null);
     setSecondFile(null);
+    setReverseFirstPdf(false);
+    setReverseSecondPdf(false);
     setOrder(defaultOrder);
     setError(null);
     setSuccessMessage(null);
@@ -306,20 +317,50 @@ function App() {
             <CardDescription>Select the two PDF documents to interleave.</CardDescription>
           </CardHeader>
           <CardContent className="grid gap-6 md:grid-cols-2">
-            <FileDropZone
-              id="first-pdf"
-              label="First PDF"
-              selectedFile={firstFile}
-              onFileSelect={setFirstFile}
-              formatBytes={formatBytes}
-            />
-            <FileDropZone
-              id="second-pdf"
-              label="Second PDF"
-              selectedFile={secondFile}
-              onFileSelect={setSecondFile}
-              formatBytes={formatBytes}
-            />
+            <div className="space-y-3">
+              <FileDropZone
+                id="first-pdf"
+                label="First PDF"
+                selectedFile={firstFile}
+                onFileSelect={setFirstFile}
+                formatBytes={formatBytes}
+              />
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="reverse-first"
+                  checked={reverseFirstPdf}
+                  onCheckedChange={(checked) => setReverseFirstPdf(checked === true)}
+                />
+                <Label
+                  htmlFor="reverse-first"
+                  className="text-sm font-normal cursor-pointer"
+                >
+                  Reverse page order (for duplex scanning)
+                </Label>
+              </div>
+            </div>
+            <div className="space-y-3">
+              <FileDropZone
+                id="second-pdf"
+                label="Second PDF"
+                selectedFile={secondFile}
+                onFileSelect={setSecondFile}
+                formatBytes={formatBytes}
+              />
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="reverse-second"
+                  checked={reverseSecondPdf}
+                  onCheckedChange={(checked) => setReverseSecondPdf(checked === true)}
+                />
+                <Label
+                  htmlFor="reverse-second"
+                  className="text-sm font-normal cursor-pointer"
+                >
+                  Reverse page order (for duplex scanning)
+                </Label>
+              </div>
+            </div>
           </CardContent>
           <CardFooter className="flex flex-wrap items-center justify-between gap-4">
             <div className="flex items-center gap-2">
