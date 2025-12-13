@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to Dupl3x PDF Interleaver will be documented in this file.
+All notable changes to Duplex0r PDF Interleaver will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
@@ -39,7 +39,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Initial Release
 
-First working version of Dupl3x PDF Interleaver - a modern, full-stack web application for interleaving PDF documents.
+First working version of Duplex0r PDF Interleaver - a modern, full-stack web application for interleaving PDF documents.
 
 ### Features
 
@@ -88,7 +88,7 @@ First working version of Dupl3x PDF Interleaver - a modern, full-stack web appli
 - **One-command shutdown** - `python scripts/stop.py` cleanly stops all processes
 - **Automatic database setup** - SQLite database created automatically on first run
 - **Process management** - PID tracking for clean process lifecycle
-- **Separate logging** - Backend and frontend logs in `.dupl3x/` directory
+- **Separate logging** - Backend and frontend logs in `.duplex0r/` directory
 - **Hot reload** - Vite HMR for frontend, Uvicorn reload for backend
 
 ### Technical Stack
@@ -133,7 +133,7 @@ First working version of Dupl3x PDF Interleaver - a modern, full-stack web appli
 ### File Structure
 
 ```
-Dupl3x/
+Duplex0r/
 ├── backend/api/        # FastAPI backend application
 │   ├── app/           # Application code
 │   │   ├── routers/   # API route handlers
@@ -151,7 +151,7 @@ Dupl3x/
 ├── scripts/           # Startup and management scripts
 │   ├── start.py       # Start both servers
 │   └── stop.py        # Stop both servers
-└── .dupl3x/          # Runtime data (gitignored)
+└── .duplex0r/        # Runtime data (gitignored)
     ├── pids.json      # Process IDs
     ├── backend.log    # Backend logs
     └── frontend.log   # Frontend logs
@@ -203,6 +203,6 @@ Future versions may include:
 
 ## Release Notes
 
-This is the first production-ready release of Dupl3x PDF Interleaver. All core features are functional and tested. The application is ready for personal and professional use for PDF interleaving tasks.
+This is the first production-ready release of Duplex0r PDF Interleaver. All core features are functional and tested. The application is ready for personal and professional use for PDF interleaving tasks.
 
-[0.5.0]: https://github.com/yourusername/dupl3x/releases/tag/v0.5.0
+[0.5.0]: https://github.com/yourusername/duplex0r/releases/tag/v0.5.0

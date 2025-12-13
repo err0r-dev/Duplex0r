@@ -282,7 +282,7 @@ function App() {
       <header className="border-b bg-card/50">
         <div className="container flex items-center justify-between gap-2 py-6">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Dupl3x PDF Interleaver</h1>
+            <h1 className="text-3xl font-bold tracking-tight">Duplex0r PDF Interleaver</h1>
             <p className="text-muted-foreground">
               Upload two PDFs, choose the order, and generate an interleaved result instantly.
             </p>

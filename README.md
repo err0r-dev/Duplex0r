@@ -1,10 +1,10 @@
-# Dupl3x PDF Interleaver
+# Duplex0r PDF Interleaver
 
 ![Version](https://img.shields.io/badge/version-0.6.0-blue.svg)
 ![Python](https://img.shields.io/badge/python-3.13+-green.svg)
 ![Node](https://img.shields.io/badge/node-18.18+-green.svg)
 
-Dupl3x is a modern, full-stack web application for interleaving PDF documents. Upload two PDFs, choose the page order, and download a merged result where pages alternate between your documents. Perfect for combining odd/even scanned pages, merging duplex scans, or any scenario requiring page-by-page interleaving.
+Duplex0r is a modern, full-stack web application for interleaving PDF documents. Upload two PDFs, choose the page order, and download a merged result where pages alternate between your documents. Perfect for combining odd/even scanned pages, merging duplex scans, or any scenario requiring page-by-page interleaving.
 
 The FastAPI backend handles PDF processing, activity logging, and settings storage (PostgreSQL-ready with SQLite fallback), while the React + Vite frontend offers an intuitive drag-and-drop interface with dark/light theme support.
 
@@ -46,7 +46,7 @@ The FastAPI backend handles PDF processing, activity logging, and settings stora
 ## Project Structure
 
 ```
-Dupl3x/
+Duplex0r/
 ├── backend/api/           # FastAPI backend application
 │   ├── app/
 │   │   ├── routers/       # API endpoint handlers
@@ -78,7 +78,7 @@ Dupl3x/
 ├── scripts/
 │   ├── start.py           # Start both servers with one command
 │   └── stop.py            # Stop both servers cleanly
-└── .dupl3x/               # Runtime artifacts (gitignored)
+└── .duplex0r/             # Runtime artifacts (gitignored)
     ├── pids.json          # Process IDs for management
     ├── backend.log        # Backend application logs
     └── frontend.log       # Frontend development logs
@@ -158,7 +158,7 @@ cd frontend && npm run build
 
 | Variable | Description | Default | Example |
 | --- | --- | --- | --- |
-| `DATABASE_URL` | Database connection string (async SQLAlchemy format). Falls back to SQLite when unset. | `sqlite+aiosqlite:///backend/api/data/app.db` | `postgresql+asyncpg://user:password@localhost:5432/dupl3x` |
+| `DATABASE_URL` | Database connection string (async SQLAlchemy format). Falls back to SQLite when unset. | `sqlite+aiosqlite:///backend/api/data/app.db` | `postgresql+asyncpg://user:password@localhost:5432/duplex0r` |
 | `BACKEND_PORT` | Port for FastAPI backend server | `8000` | `8080` |
 | `FRONTEND_PORT` | Port for Vite development server | `5173` | `3000` |
 | `VITE_API_BASE_URL` | API base URL for frontend (auto-set by start.py) | `http://localhost:8000/api` | `https://api.example.com/api` |
@@ -172,7 +172,7 @@ cd frontend && npm run build
 
 **PostgreSQL (Production):**
 ```bash
-export DATABASE_URL="postgresql+asyncpg://username:password@localhost:5432/dupl3x"
+export DATABASE_URL="postgresql+asyncpg://username:password@localhost:5432/duplex0r"
 python scripts/start.py
 ```
 
@@ -306,7 +306,7 @@ To reset the application:
 ```bash
 python scripts/stop.py
 rm -rf backend/api/data/
-rm -rf .dupl3x/
+rm -rf .duplex0r/
 python scripts/start.py
 ```
 
@@ -376,4 +376,4 @@ See [CHANGELOG.md](CHANGELOG.md) for version history and release notes.
 For issues and questions:
 - Open an issue on GitHub
 - Check the Troubleshooting section above
-- Review logs in `.dupl3x/backend.log` and `.dupl3x/frontend.log`
+- Review logs in `.duplex0r/backend.log` and `.duplex0r/frontend.log`

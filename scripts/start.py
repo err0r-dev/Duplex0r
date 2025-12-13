@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Start the Dupl3x stack (backend + frontend) using uv and npm."""
+"""Start the Duplex0r stack (backend + frontend) using uv and npm."""
 
 from __future__ import annotations
 
@@ -12,7 +12,7 @@ import webbrowser
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-STATE_DIR = ROOT / ".dupl3x"
+STATE_DIR = ROOT / ".duplex0r"
 PID_FILE = STATE_DIR / "pids.json"
 BACKEND_LOG = STATE_DIR / "backend.log"
 FRONTEND_LOG = STATE_DIR / "frontend.log"
@@ -114,7 +114,7 @@ def main() -> int:
     except Exception as exc:  # pragma: no cover - best effort
         print(f"[!] Unable to open browser automatically: {exc}")
 
-    print("[+] Services launched. Logs available in .dupl3x/")
+    print("[+] Services launched. Logs available in .duplex0r/")
     return 0
 
 

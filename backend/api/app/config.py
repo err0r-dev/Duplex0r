@@ -10,7 +10,7 @@ from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
     
-    app_name: str = "Dupl3x API"
+    app_name: str = "Duplex0r API"
     allow_origins: List[str] = Field(default_factory=lambda: ["*"])
     database_url: str = Field(
         default="sqlite+aiosqlite:///" + str((Path(__file__).resolve().parent / "../data/app.db").resolve())

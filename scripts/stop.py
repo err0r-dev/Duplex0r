@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Stop the Dupl3x stack using the stored PID file."""
+"""Stop the Duplex0r stack using the stored PID file."""
 
 from __future__ import annotations
 
@@ -11,7 +11,7 @@ import time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-STATE_DIR = ROOT / ".dupl3x"
+STATE_DIR = ROOT / ".duplex0r"
 PID_FILE = STATE_DIR / "pids.json"
 
 
