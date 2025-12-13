@@ -1,17 +1,24 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { AlertOctagon, ArrowUpDown, Download, Loader2, RefreshCcw, RotateCcw, Trash2 } from "lucide-react";
+import {
+  AlertOctagon,
+  ArrowLeftRight,
+  ArrowRight,
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  Download,
+  HelpCircle,
+  Loader2,
+  RefreshCcw,
+  RotateCcw,
+  Settings,
+  Trash2,
+  X,
+} from "lucide-react";
 
 import { Alert, AlertDescription, AlertTitle } from "./components/ui/alert";
 import { SplashScreen } from "./components/SplashScreen";
 import { Button } from "./components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "./components/ui/card";
 import { Checkbox } from "./components/ui/checkbox";
 import {
   Dialog,
@@ -25,6 +32,14 @@ import { Input } from "./components/ui/input";
 import { Label } from "./components/ui/label";
 import { Progress } from "./components/ui/progress";
 import { Separator } from "./components/ui/separator";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "./components/ui/sheet";
 import { FileDropZone } from "./components/FileDropZone";
 import { ThemeToggle } from "./components/theme-toggle";
 
@@ -52,6 +67,111 @@ const formatBytes = (bytes: number) => {
   return `${value.toFixed(1)} ${sizes[i]}`;
 };
 
+// Step progress indicator component
+function StepProgress({ currentStep }: { currentStep: 1 | 2 | 3 }) {
+  const stepLabels = ["Upload first PDF", "Upload second PDF", "Merge files"];
+  return (
+    <nav aria-label="Guide progress" className="step-progress">
+      <div
+        className={`step-dot ${currentStep >= 1 ? (currentStep > 1 ? "completed" : "active") : ""}`}
+        aria-current={currentStep === 1 ? "step" : undefined}
+        aria-label={`Step 1: ${stepLabels[0]}${currentStep > 1 ? " (completed)" : currentStep === 1 ? " (current)" : ""}`}
+      >
+        {currentStep > 1 ? <Check className="h-4 w-4" aria-hidden="true" /> : "1"}
+      </div>
+      <div className={`step-line ${currentStep > 1 ? "completed" : ""}`} aria-hidden="true" />
+      <div
+        className={`step-dot ${currentStep >= 2 ? (currentStep > 2 ? "completed" : "active") : ""}`}
+        aria-current={currentStep === 2 ? "step" : undefined}
+        aria-label={`Step 2: ${stepLabels[1]}${currentStep > 2 ? " (completed)" : currentStep === 2 ? " (current)" : ""}`}
+      >
+        {currentStep > 2 ? <Check className="h-4 w-4" aria-hidden="true" /> : "2"}
+      </div>
+      <div className={`step-line ${currentStep > 2 ? "completed" : ""}`} aria-hidden="true" />
+      <div
+        className={`step-dot ${currentStep === 3 ? "active" : ""}`}
+        aria-current={currentStep === 3 ? "step" : undefined}
+        aria-label={`Step 3: ${stepLabels[2]}${currentStep === 3 ? " (current)" : ""}`}
+      >
+        3
+      </div>
+    </nav>
+  );
+}
+
+// Guided mode illustrations
+function OddPagesIllustration() {
+  return (
+    <div className="guide-illustration">
+      <div className="mini-pdf-stack" style={{ left: "50%", transform: "translateX(-50%)" }}>
+        <div className="mini-pdf-page odd highlighted">
+          <span className="page-number">1</span>
+        </div>
+        <div className="mini-pdf-page even" style={{ marginLeft: "8px" }}>
+          <span className="page-number">2</span>
+        </div>
+        <div className="mini-pdf-page odd highlighted" style={{ marginLeft: "16px" }}>
+          <span className="page-number">3</span>
+        </div>
+        <div className="mini-pdf-page even" style={{ marginLeft: "24px" }}>
+          <span className="page-number">4</span>
+        </div>
+        <div className="mini-pdf-page odd highlighted" style={{ marginLeft: "32px" }}>
+          <span className="page-number">5</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function EvenPagesIllustration() {
+  return (
+    <div className="guide-illustration">
+      <div className="mini-pdf-stack" style={{ left: "50%", transform: "translateX(-50%)" }}>
+        <div className="mini-pdf-page odd">
+          <span className="page-number">1</span>
+        </div>
+        <div className="mini-pdf-page even highlighted" style={{ marginLeft: "8px" }}>
+          <span className="page-number">2</span>
+        </div>
+        <div className="mini-pdf-page odd" style={{ marginLeft: "16px" }}>
+          <span className="page-number">3</span>
+        </div>
+        <div className="mini-pdf-page even highlighted" style={{ marginLeft: "24px" }}>
+          <span className="page-number">4</span>
+        </div>
+        <div className="mini-pdf-page odd" style={{ marginLeft: "32px" }}>
+          <span className="page-number">5</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MergeIllustration() {
+  return (
+    <div className="guide-illustration">
+      <div className="mini-pdf-stack" style={{ left: "20px", top: "10px" }}>
+        <div className="mini-pdf-page odd">
+          <span className="page-number">1</span>
+        </div>
+        <div className="mini-pdf-page odd" style={{ marginLeft: "6px" }}>
+          <span className="page-number">3</span>
+        </div>
+      </div>
+      <ArrowRight className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-6 w-6 text-muted-foreground" />
+      <div className="mini-pdf-stack" style={{ right: "20px", top: "10px" }}>
+        <div className="mini-pdf-page even">
+          <span className="page-number">2</span>
+        </div>
+        <div className="mini-pdf-page even" style={{ marginLeft: "6px" }}>
+          <span className="page-number">4</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function App() {
   const [firstFile, setFirstFile] = useState<File | null>(null);
   const [secondFile, setSecondFile] = useState<File | null>(null);
@@ -72,6 +192,12 @@ function App() {
   const [showSplash, setShowSplash] = useState(() => {
     return localStorage.getItem("duplex0r_splash_seen") !== "true";
   });
+
+  // Guided mode state
+  const [guidedMode, setGuidedMode] = useState(() => {
+    return localStorage.getItem("duplex0r_guided_mode") === "true";
+  });
+  const [currentStep, setCurrentStep] = useState<1 | 2 | 3>(1);
 
   const canProcess = useMemo(
     () => Boolean(firstFile && secondFile && !isProcessing),
@@ -236,6 +362,7 @@ function App() {
     setOrder(defaultOrder);
     setError(null);
     setSuccessMessage(null);
+    setCurrentStep(1);
   };
 
   const handleSaveDefaultOrder = async () => {
@@ -262,8 +389,6 @@ function App() {
     }
   };
 
-  const orderLabel = order === "first_second" ? "First PDF first" : "Second PDF first";
-
   const handleDismissSplash = useCallback(() => {
     setShowSplash(false);
     localStorage.setItem("duplex0r_splash_seen", "true");
@@ -273,301 +398,469 @@ function App() {
     setShowSplash(true);
   }, []);
 
+  const handleToggleGuidedMode = useCallback(() => {
+    setGuidedMode((prev) => {
+      const newValue = !prev;
+      localStorage.setItem("duplex0r_guided_mode", String(newValue));
+      return newValue;
+    });
+    setCurrentStep(1);
+  }, []);
+
+  // Guided mode navigation
+  const handleNextStep = () => {
+    if (currentStep === 1 && firstFile) {
+      setCurrentStep(2);
+    } else if (currentStep === 2 && secondFile) {
+      setCurrentStep(3);
+    }
+  };
+
+  const handlePrevStep = () => {
+    if (currentStep === 2) {
+      setCurrentStep(1);
+    } else if (currentStep === 3) {
+      setCurrentStep(2);
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       {showSplash && <SplashScreen onDismiss={handleDismissSplash} />}
 
-      <header className="border-b bg-card/50">
-        <div className="container flex items-center justify-between gap-2 py-6">
-          <div>
-            <h1
-              className="text-3xl font-bold tracking-tight header-title-clickable"
-              onClick={handleShowSplash}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  handleShowSplash();
-                }
-              }}
-            >
-              Duplex0r PDF Interleaver
-            </h1>
-            <p className="text-muted-foreground">
-              No duplex scanner? Combine your odd and even page scans into one document.
-            </p>
+      {/* Header */}
+      <header className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-40">
+        <div className="container flex items-center justify-between gap-4 py-4">
+          <h1
+            className="text-2xl header-title-gradient"
+            onClick={handleShowSplash}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                handleShowSplash();
+              }
+            }}
+          >
+            Duplex0r
+          </h1>
+
+          <div className="flex items-center gap-2">
+            {/* Settings Sheet */}
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <Settings className="h-5 w-5" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent>
+                <SheetHeader>
+                  <SheetTitle>Settings & History</SheetTitle>
+                  <SheetDescription>
+                    Manage your preferences and view processing history.
+                  </SheetDescription>
+                </SheetHeader>
+
+                <div className="mt-6 space-y-6">
+                  {/* Preferences Section */}
+                  <div>
+                    <h3 className="font-semibold mb-3">Default Order</h3>
+                    <p className="text-sm text-muted-foreground mb-3">
+                      Current: {order === "first_second" ? "First PDF first" : "Second PDF first"}
+                    </p>
+                    <p className="text-sm text-muted-foreground mb-3">
+                      Saved default: {defaultOrder === "first_second" ? "First PDF first" : "Second PDF first"}
+                    </p>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={handleSaveDefaultOrder}
+                      disabled={isSavingSettings || order === defaultOrder}
+                    >
+                      {isSavingSettings ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Saving...
+                        </>
+                      ) : (
+                        "Save current as default"
+                      )}
+                    </Button>
+                  </div>
+
+                  <Separator />
+
+                  {/* Recent Activity Section */}
+                  <div>
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="font-semibold">Recent Activity</h3>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setShowClearLogsDialog(true)}
+                          disabled={loadingLogs || logs.length === 0}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => refreshLogs()}
+                          disabled={loadingLogs}
+                        >
+                          <RefreshCcw className={`h-4 w-4 ${loadingLogs ? "animate-spin" : ""}`} />
+                        </Button>
+                      </div>
+                    </div>
+
+                    {logs.length === 0 ? (
+                      <p className="text-sm text-muted-foreground">
+                        No processing history yet.
+                      </p>
+                    ) : (
+                      <div className="max-h-[300px] overflow-y-auto">
+                        <table className="logs-table">
+                          <thead>
+                            <tr>
+                              <th>Files</th>
+                              <th>Status</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {logs.map((log) => (
+                              <tr key={log.id}>
+                                <td>
+                                  <div className="text-xs truncate max-w-[150px]">
+                                    {log.first_pdf_name}
+                                  </div>
+                                  <div className="text-xs truncate max-w-[150px] text-muted-foreground">
+                                    + {log.second_pdf_name}
+                                  </div>
+                                </td>
+                                <td>
+                                  <span className={
+                                    log.status === "completed"
+                                      ? "status-completed"
+                                      : log.status === "error"
+                                        ? "status-error"
+                                        : ""
+                                  }>
+                                    {log.status}
+                                  </span>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </SheetContent>
+            </Sheet>
+
+            <ThemeToggle />
           </div>
-          <ThemeToggle />
         </div>
       </header>
 
-      <main className="container space-y-6 py-10">
-        {error && (
-          <Alert variant="destructive">
-            <div className="flex items-start gap-2">
-              <AlertOctagon className="mt-0.5 h-4 w-4" />
-              <div>
-                <AlertTitle>Error</AlertTitle>
-                <AlertDescription>{error}</AlertDescription>
+      {/* Main Content */}
+      <main className="container flex-1 py-8">
+        {/* Error/Success Messages */}
+        <div role="status" aria-live="polite" aria-atomic="true">
+          {error && (
+            <Alert variant="destructive" className="mb-6">
+              <div className="flex items-start gap-2">
+                <AlertOctagon className="mt-0.5 h-4 w-4" aria-hidden="true" />
+                <div>
+                  <AlertTitle>Error</AlertTitle>
+                  <AlertDescription>{error}</AlertDescription>
+                </div>
+              </div>
+            </Alert>
+          )}
+
+          {successMessage && (
+            <Alert className="mb-6">
+              <AlertTitle>Success</AlertTitle>
+              <AlertDescription>{successMessage}</AlertDescription>
+            </Alert>
+          )}
+        </div>
+
+        {guidedMode ? (
+          /* ===== GUIDED MODE ===== */
+          <div className="animate-fade-in">
+            <div className="mb-6">
+              <StepProgress currentStep={currentStep} />
+            </div>
+
+            <div className="guided-card animate-slide-up">
+              {currentStep === 1 && (
+                <>
+                  <h2 className="guided-step-title">Upload Your First PDF</h2>
+                  <p className="guided-step-description">
+                    This should contain your <strong>odd pages</strong> (1, 3, 5, 7...)
+                  </p>
+                  <OddPagesIllustration />
+                  <FileDropZone
+                    id="first-pdf"
+                    label="First PDF (Odd Pages)"
+                    selectedFile={firstFile}
+                    onFileSelect={setFirstFile}
+                    formatBytes={formatBytes}
+                    variant="first"
+                  />
+                  <div className="flex items-center space-x-2 mt-4">
+                    <Checkbox
+                      id="reverse-first"
+                      checked={reverseFirstPdf}
+                      onCheckedChange={(checked) => setReverseFirstPdf(checked === true)}
+                    />
+                    <Label htmlFor="reverse-first" className="text-sm cursor-pointer">
+                      Reverse page order (if scanned face-up)
+                    </Label>
+                  </div>
+                  <div className="flex justify-end mt-6">
+                    <Button onClick={handleNextStep} disabled={!firstFile}>
+                      Next
+                      <ChevronRight className="ml-2 h-4 w-4" />
+                    </Button>
+                  </div>
+                </>
+              )}
+
+              {currentStep === 2 && (
+                <>
+                  <h2 className="guided-step-title">Upload Your Second PDF</h2>
+                  <p className="guided-step-description">
+                    This should contain your <strong>even pages</strong> (2, 4, 6, 8...)
+                  </p>
+                  <EvenPagesIllustration />
+                  <FileDropZone
+                    id="second-pdf"
+                    label="Second PDF (Even Pages)"
+                    selectedFile={secondFile}
+                    onFileSelect={setSecondFile}
+                    formatBytes={formatBytes}
+                    variant="second"
+                  />
+                  <div className="flex items-center space-x-2 mt-4">
+                    <Checkbox
+                      id="reverse-second"
+                      checked={reverseSecondPdf}
+                      onCheckedChange={(checked) => setReverseSecondPdf(checked === true)}
+                    />
+                    <Label htmlFor="reverse-second" className="text-sm cursor-pointer">
+                      Reverse page order (if scanned face-up)
+                    </Label>
+                  </div>
+                  <div className="flex justify-between mt-6">
+                    <Button variant="outline" onClick={handlePrevStep}>
+                      <ChevronLeft className="mr-2 h-4 w-4" />
+                      Back
+                    </Button>
+                    <Button onClick={handleNextStep} disabled={!secondFile}>
+                      Next
+                      <ChevronRight className="ml-2 h-4 w-4" />
+                    </Button>
+                  </div>
+                </>
+              )}
+
+              {currentStep === 3 && (
+                <>
+                  <h2 className="guided-step-title">Ready to Merge</h2>
+                  <p className="guided-step-description">
+                    Your pages will be interleaved into a single document.
+                  </p>
+                  <MergeIllustration />
+
+                  <div className="space-y-4 mt-4">
+                    <div className="p-4 rounded-lg bg-muted/50">
+                      <p className="text-sm font-medium mb-2">Selected files:</p>
+                      <p className="text-sm text-muted-foreground truncate">1. {firstFile?.name}</p>
+                      <p className="text-sm text-muted-foreground truncate">2. {secondFile?.name}</p>
+                    </div>
+
+                    <div>
+                      <p className="text-sm font-medium mb-2">Page order:</p>
+                      <div className="flex rounded-md border">
+                        <Button
+                          variant={order === "first_second" ? "default" : "ghost"}
+                          className="rounded-none rounded-l-md flex-1"
+                          onClick={() => setOrder("first_second")}
+                        >
+                          First → Second
+                        </Button>
+                        <Separator orientation="vertical" />
+                        <Button
+                          variant={order === "second_first" ? "default" : "ghost"}
+                          className="rounded-none rounded-r-md flex-1"
+                          onClick={() => setOrder("second_first")}
+                        >
+                          Second → First
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-between mt-6">
+                    <Button variant="outline" onClick={handlePrevStep}>
+                      <ChevronLeft className="mr-2 h-4 w-4" />
+                      Back
+                    </Button>
+                    <Button
+                      className="btn-gradient"
+                      onClick={handleProcess}
+                      disabled={!canProcess}
+                    >
+                      <Download className="mr-2 h-4 w-4" />
+                      Process & Download
+                    </Button>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        ) : (
+          /* ===== STREAMLINED MODE ===== */
+          <div className="max-w-4xl mx-auto animate-fade-in">
+            <div className="text-center mb-8">
+              <p className="text-muted-foreground">
+                Combine your odd and even page scans into one document
+              </p>
+            </div>
+
+            {/* Upload Section */}
+            <div className="flex flex-col md:flex-row gap-6 mb-8 items-stretch">
+              <div className="flex-1">
+                <FileDropZone
+                  id="first-pdf"
+                  label="First PDF"
+                  selectedFile={firstFile}
+                  onFileSelect={setFirstFile}
+                  formatBytes={formatBytes}
+                  variant="first"
+                />
+              </div>
+
+              {/* Swap button - centered between zones on desktop */}
+              <div className="hidden md:flex items-center justify-center">
+                <button
+                  onClick={handleSwapFiles}
+                  disabled={!firstFile && !secondFile}
+                  className="swap-button-inline"
+                  title="Swap files"
+                  aria-label="Swap first and second PDF files"
+                >
+                  <ArrowLeftRight className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
+                </button>
+              </div>
+
+              <div className="flex-1">
+                <FileDropZone
+                  id="second-pdf"
+                  label="Second PDF"
+                  selectedFile={secondFile}
+                  onFileSelect={setSecondFile}
+                  formatBytes={formatBytes}
+                  variant="second"
+                />
               </div>
             </div>
-          </Alert>
-        )}
 
-        {successMessage && (
-          <Alert>
-            <AlertTitle>Success</AlertTitle>
-            <AlertDescription>{successMessage}</AlertDescription>
-          </Alert>
-        )}
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Upload PDFs</CardTitle>
-            <CardDescription>Select the two PDF documents to interleave.</CardDescription>
-          </CardHeader>
-          <CardContent className="grid gap-6 md:grid-cols-2">
-            <div className="space-y-3">
-              <FileDropZone
-                id="first-pdf"
-                label="First PDF"
-                selectedFile={firstFile}
-                onFileSelect={setFirstFile}
-                formatBytes={formatBytes}
-              />
+            {/* Reverse checkboxes */}
+            <div className="grid gap-4 md:grid-cols-2 mb-8">
               <div className="flex items-center space-x-2">
                 <Checkbox
                   id="reverse-first"
                   checked={reverseFirstPdf}
                   onCheckedChange={(checked) => setReverseFirstPdf(checked === true)}
                 />
-                <Label
-                  htmlFor="reverse-first"
-                  className="text-sm font-normal cursor-pointer"
-                >
-                  Reverse page order (for duplex scanning)
+                <Label htmlFor="reverse-first" className="text-sm cursor-pointer">
+                  Reverse first PDF page order
                 </Label>
               </div>
-            </div>
-            <div className="space-y-3">
-              <FileDropZone
-                id="second-pdf"
-                label="Second PDF"
-                selectedFile={secondFile}
-                onFileSelect={setSecondFile}
-                formatBytes={formatBytes}
-              />
               <div className="flex items-center space-x-2">
                 <Checkbox
                   id="reverse-second"
                   checked={reverseSecondPdf}
                   onCheckedChange={(checked) => setReverseSecondPdf(checked === true)}
                 />
-                <Label
-                  htmlFor="reverse-second"
-                  className="text-sm font-normal cursor-pointer"
-                >
-                  Reverse page order (for duplex scanning)
+                <Label htmlFor="reverse-second" className="text-sm cursor-pointer">
+                  Reverse second PDF page order
                 </Label>
               </div>
             </div>
-          </CardContent>
-          <CardFooter className="flex flex-wrap items-center justify-between gap-4">
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-medium">Order:</span>
-              <div className="flex rounded-md border">
-                <Button
-                  variant={order === "first_second" ? "default" : "ghost"}
-                  className="rounded-none rounded-l-md"
-                  onClick={() => setOrder("first_second")}
-                >
-                  First → Second
-                </Button>
-                <Separator orientation="vertical" />
-                <Button
-                  variant={order === "second_first" ? "default" : "ghost"}
-                  className="rounded-none rounded-r-md"
-                  onClick={() => setOrder("second_first")}
-                >
-                  Second → First
-                </Button>
-              </div>
-            </div>
 
-            <div className="flex items-center gap-2">
+            {/* Mobile swap button */}
+            <div className="flex justify-center mb-6 md:hidden">
               <Button
-                type="button"
                 variant="outline"
                 onClick={handleSwapFiles}
                 disabled={!firstFile && !secondFile}
               >
-                <RefreshCcw className="mr-2 h-4 w-4" />
-                Swap uploads
-              </Button>
-              <Button type="button" variant="outline" onClick={handleReset}>
-                <RotateCcw className="mr-2 h-4 w-4" />
-                Reset
-              </Button>
-              <Button
-                type="button"
-                onClick={handleProcess}
-                disabled={!canProcess}
-              >
-                {isProcessing ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Processing…
-                  </>
-                ) : (
-                  <>
-                    <Download className="mr-2 h-4 w-4" />
-                    Process
-                  </>
-                )}
+                <ArrowLeftRight className="mr-2 h-4 w-4" />
+                Swap files
               </Button>
             </div>
-          </CardFooter>
-        </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Preferences</CardTitle>
-            <CardDescription>
-              Save your preferred default order for future sessions.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <div>
-              <p className="text-sm font-medium">Current selection</p>
-              <p className="text-sm text-muted-foreground">{orderLabel}</p>
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">
-                Default order:{" "}
-                <span className="font-medium">
-                  {defaultOrder === "first_second" ? "First PDF first" : "Second PDF first"}
-                </span>
-              </p>
-            </div>
-          </CardContent>
-          <CardFooter>
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={handleSaveDefaultOrder}
-              disabled={isSavingSettings}
-            >
-              {isSavingSettings ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Saving…
-                </>
-              ) : (
-                <>
-                  <ArrowUpDown className="mr-2 h-4 w-4" />
-                  Save as default order
-                </>
-              )}
-            </Button>
-          </CardFooter>
-        </Card>
+            {/* Order selector and actions */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 rounded-lg bg-muted/30">
+              <div className="flex items-center gap-3">
+                <span className="text-sm font-medium">Order:</span>
+                <div className="flex rounded-md border">
+                  <Button
+                    variant={order === "first_second" ? "default" : "ghost"}
+                    size="sm"
+                    className="rounded-none rounded-l-md"
+                    onClick={() => setOrder("first_second")}
+                  >
+                    First → Second
+                  </Button>
+                  <Separator orientation="vertical" />
+                  <Button
+                    variant={order === "second_first" ? "default" : "ghost"}
+                    size="sm"
+                    className="rounded-none rounded-r-md"
+                    onClick={() => setOrder("second_first")}
+                  >
+                    Second → First
+                  </Button>
+                </div>
+              </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Recent Activity</CardTitle>
-            <CardDescription>
-              A log of the most recent processing operations.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
-              <p className="text-sm text-muted-foreground">
-                {loadingLogs ? "Refreshing logs…" : `Showing ${logs.length} entr${logs.length === 1 ? "y" : "ies"}.`}
-              </p>
-              <div className="flex gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setShowClearLogsDialog(true)}
-                  disabled={loadingLogs || logs.length === 0}
-                >
-                  <Trash2 className="mr-2 h-3.5 w-3.5" />
-                  Clear All
+              <div className="flex items-center gap-2">
+                <Button variant="outline" onClick={handleReset}>
+                  <RotateCcw className="mr-2 h-4 w-4" />
+                  Reset
                 </Button>
                 <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => refreshLogs()}
-                  disabled={loadingLogs}
+                  className="btn-gradient px-6"
+                  onClick={handleProcess}
+                  disabled={!canProcess}
                 >
-                  {loadingLogs ? (
+                  {isProcessing ? (
                     <>
-                      <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
-                      Updating…
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Processing...
                     </>
                   ) : (
                     <>
-                      <RefreshCcw className="mr-2 h-3.5 w-3.5" />
-                      Refresh
+                      <Download className="mr-2 h-4 w-4" />
+                      Process & Download
                     </>
                   )}
                 </Button>
               </div>
             </div>
-            <div className="overflow-hidden rounded-md border">
-              <table className="w-full table-fixed border-collapse text-sm">
-                <thead className="bg-muted/50">
-                  <tr>
-                    <th className="p-3 text-left font-medium">Timestamp</th>
-                    <th className="p-3 text-left font-medium">First PDF</th>
-                    <th className="p-3 text-left font-medium">Second PDF</th>
-                    <th className="p-3 text-left font-medium">Order</th>
-                    <th className="p-3 text-left font-medium">Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {logs.length === 0 && (
-                    <tr>
-                      <td className="p-4 text-center text-muted-foreground" colSpan={5}>
-                        No logs yet. Process your first set of PDFs above.
-                      </td>
-                    </tr>
-                  )}
-                  {logs.map((log) => (
-                    <tr key={log.id} className="border-t">
-                      <td className="truncate p-3">{new Date(log.created_at).toLocaleString()}</td>
-                      <td className="truncate p-3">{log.first_pdf_name}</td>
-                      <td className="truncate p-3">{log.second_pdf_name}</td>
-                      <td className="p-3">
-                        {log.swapped_order ? "Second → First" : "First → Second"}
-                      </td>
-                      <td className="p-3">
-                        <span
-                          className={
-                            log.status === "completed"
-                              ? "font-medium text-emerald-600"
-                              : log.status === "pending"
-                                ? "text-muted-foreground"
-                                : "font-medium text-destructive"
-                          }
-                        >
-                          {log.status}
-                        </span>
-                        {log.error_message && (
-                          <p className="text-xs text-destructive">{log.error_message}</p>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </CardContent>
-        </Card>
+          </div>
+        )}
       </main>
 
+      {/* Footer */}
       <footer className="border-t bg-card/50 py-4 text-center">
         <a
           href="https://err0r.dev"
@@ -575,16 +868,35 @@ function App() {
           rel="noopener noreferrer"
           className="text-sm text-muted-foreground hover:text-foreground transition-colors"
         >
-          © 2025 err0r.dev
+          err0r.dev
         </a>
       </footer>
 
+      {/* Floating Help Button */}
+      <button
+        onClick={handleToggleGuidedMode}
+        className={`floating-help-button ${guidedMode ? "active" : ""}`}
+        title={guidedMode ? "Exit guided mode" : "Need help? Try the step-by-step guide"}
+        aria-label={guidedMode ? "Exit guided mode" : "Open step-by-step guide"}
+        aria-pressed={guidedMode}
+      >
+        {guidedMode ? (
+          <X className="h-6 w-6" aria-hidden="true" />
+        ) : (
+          <>
+            <HelpCircle className="h-6 w-6" aria-hidden="true" />
+            <span className="floating-help-label">Need help?</span>
+          </>
+        )}
+      </button>
+
+      {/* Filename Dialog */}
       <Dialog open={showFilenameDialog} onOpenChange={setShowFilenameDialog}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Name Your Output File</DialogTitle>
             <DialogDescription>
-              Enter a filename for the interleaved PDF. The .pdf extension will be added automatically if not included.
+              Enter a filename for the interleaved PDF.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
@@ -614,7 +926,6 @@ function App() {
           </div>
           <DialogFooter className="sm:justify-between">
             <Button
-              type="button"
               variant="outline"
               onClick={() => setShowFilenameDialog(false)}
               disabled={isProcessing}
@@ -622,7 +933,7 @@ function App() {
               Cancel
             </Button>
             <Button
-              type="button"
+              className="btn-gradient"
               onClick={() => void handleConfirmProcess()}
               disabled={isProcessing || !outputFilename.trim()}
             >
@@ -642,17 +953,17 @@ function App() {
         </DialogContent>
       </Dialog>
 
+      {/* Clear Logs Dialog */}
       <Dialog open={showClearLogsDialog} onOpenChange={setShowClearLogsDialog}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Clear All Logs?</DialogTitle>
             <DialogDescription>
-              This will permanently delete all {logs.length} processing log{logs.length === 1 ? "" : "s"}. This action cannot be undone.
+              This will permanently delete all {logs.length} processing log{logs.length === 1 ? "" : "s"}.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="sm:justify-between">
             <Button
-              type="button"
               variant="outline"
               onClick={() => setShowClearLogsDialog(false)}
               disabled={isClearingLogs}
@@ -660,7 +971,6 @@ function App() {
               Cancel
             </Button>
             <Button
-              type="button"
               variant="destructive"
               onClick={() => void handleClearLogs()}
               disabled={isClearingLogs}
@@ -673,7 +983,7 @@ function App() {
               ) : (
                 <>
                   <Trash2 className="mr-2 h-4 w-4" />
-                  Clear All Logs
+                  Clear All
                 </>
               )}
             </Button>

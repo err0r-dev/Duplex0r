@@ -1,6 +1,6 @@
 import type { ChangeEvent, DragEvent } from "react";
 import { useRef, useState } from "react";
-import { Upload } from "lucide-react";
+import { FileText, Upload } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type FileDropZoneProps = {
@@ -9,6 +9,7 @@ type FileDropZoneProps = {
   selectedFile: File | null;
   onFileSelect: (file: File | null) => void;
   formatBytes: (bytes: number) => string;
+  variant?: "first" | "second";
 };
 
 export function FileDropZone({
@@ -17,6 +18,7 @@ export function FileDropZone({
   selectedFile,
   onFileSelect,
   formatBytes,
+  variant = "first",
 }: FileDropZoneProps) {
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -71,6 +73,8 @@ export function FileDropZone({
     fileInputRef.current?.click();
   };
 
+  const variantClass = variant === "first" ? "drop-zone-first" : "drop-zone-second";
+
   return (
     <div className="space-y-2">
       <label htmlFor={id} className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
@@ -83,11 +87,10 @@ export function FileDropZone({
         onDragOver={handleDragOver}
         onDrop={handleDrop}
         className={cn(
-          "relative flex flex-col items-center justify-center rounded-md border-2 border-dashed p-6 transition-colors cursor-pointer",
-          isDragging
-            ? "border-primary bg-primary/5"
-            : "border-input hover:border-primary/50 hover:bg-accent/50",
-          selectedFile && "bg-accent/20"
+          "drop-zone",
+          variantClass,
+          isDragging && "is-dragging",
+          selectedFile && "has-file"
         )}
       >
         <input
@@ -98,12 +101,16 @@ export function FileDropZone({
           onChange={handleFileChange}
           className="sr-only"
         />
+        <div className="drop-zone-icon">
+          {selectedFile ? (
+            <FileText className="h-7 w-7 text-muted-foreground" />
+          ) : (
+            <Upload className="h-7 w-7 text-muted-foreground" />
+          )}
+        </div>
         {selectedFile ? (
           <div className="text-center">
-            <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-              <Upload className="h-6 w-6 text-primary" />
-            </div>
-            <p className="text-sm font-medium">{selectedFile.name}</p>
+            <p className="text-sm font-medium truncate max-w-[200px]">{selectedFile.name}</p>
             <p className="text-xs text-muted-foreground mt-1">
               {formatBytes(selectedFile.size)}
             </p>
@@ -113,12 +120,9 @@ export function FileDropZone({
           </div>
         ) : (
           <div className="text-center">
-            <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-muted">
-              <Upload className="h-6 w-6 text-muted-foreground" />
-            </div>
-            <p className="text-sm font-medium">Drop PDF here or click to browse</p>
+            <p className="text-sm font-medium">Drop PDF here</p>
             <p className="text-xs text-muted-foreground mt-1">
-              PDF files only
+              or click to browse
             </p>
           </div>
         )}
