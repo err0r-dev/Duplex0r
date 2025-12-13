@@ -189,9 +189,7 @@ function App() {
   const [outputFilename, setOutputFilename] = useState("");
   const [showClearLogsDialog, setShowClearLogsDialog] = useState(false);
   const [isClearingLogs, setIsClearingLogs] = useState(false);
-  const [showSplash, setShowSplash] = useState(() => {
-    return localStorage.getItem("duplex0r_splash_seen") !== "true";
-  });
+  const [showSplash, setShowSplash] = useState(true);
 
   // Guided mode state
   const [guidedMode, setGuidedMode] = useState(() => {
@@ -391,7 +389,6 @@ function App() {
 
   const handleDismissSplash = useCallback(() => {
     setShowSplash(false);
-    localStorage.setItem("duplex0r_splash_seen", "true");
   }, []);
 
   const handleShowSplash = useCallback(() => {
