@@ -90,7 +90,7 @@ export function SplashScreen({ onDismiss }: SplashScreenProps) {
         <h1 className="splash-title">Duplex0r</h1>
         <p className="splash-subtitle">PDF Interleaver</p>
         <p className="splash-description">
-          Merge your duplex-scanned pages seamlessly
+          No duplex scanner? Merge your odd and even page scans into one.
         </p>
       </div>
 

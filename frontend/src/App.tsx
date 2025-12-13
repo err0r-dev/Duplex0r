@@ -294,7 +294,7 @@ function App() {
               Duplex0r PDF Interleaver
             </h1>
             <p className="text-muted-foreground">
-              Upload two PDFs, choose the order, and generate an interleaved result instantly.
+              No duplex scanner? Combine your odd and even page scans into one document.
             </p>
           </div>
           <ThemeToggle />
