@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { AlertOctagon, ArrowUpDown, Download, Loader2, RefreshCcw, RotateCcw, Trash2 } from "lucide-react";
 
 import { Alert, AlertDescription, AlertTitle } from "./components/ui/alert";
+import { SplashScreen } from "./components/SplashScreen";
 import { Button } from "./components/ui/button";
 import {
   Card,
@@ -68,6 +69,9 @@ function App() {
   const [outputFilename, setOutputFilename] = useState("");
   const [showClearLogsDialog, setShowClearLogsDialog] = useState(false);
   const [isClearingLogs, setIsClearingLogs] = useState(false);
+  const [showSplash, setShowSplash] = useState(() => {
+    return localStorage.getItem("duplex0r_splash_seen") !== "true";
+  });
 
   const canProcess = useMemo(
     () => Boolean(firstFile && secondFile && !isProcessing),
@@ -260,12 +264,35 @@ function App() {
 
   const orderLabel = order === "first_second" ? "First PDF first" : "Second PDF first";
 
+  const handleDismissSplash = useCallback(() => {
+    setShowSplash(false);
+    localStorage.setItem("duplex0r_splash_seen", "true");
+  }, []);
+
+  const handleShowSplash = useCallback(() => {
+    setShowSplash(true);
+  }, []);
+
   return (
     <div className="min-h-screen bg-background">
+      {showSplash && <SplashScreen onDismiss={handleDismissSplash} />}
+
       <header className="border-b bg-card/50">
         <div className="container flex items-center justify-between gap-2 py-6">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Duplex0r PDF Interleaver</h1>
+            <h1
+              className="text-3xl font-bold tracking-tight header-title-clickable"
+              onClick={handleShowSplash}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  handleShowSplash();
+                }
+              }}
+            >
+              Duplex0r PDF Interleaver
+            </h1>
             <p className="text-muted-foreground">
               Upload two PDFs, choose the order, and generate an interleaved result instantly.
             </p>
