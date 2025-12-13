@@ -35,6 +35,11 @@ async def health_check():
 
 # Serve frontend static files in production (when SERVE_FRONTEND=true)
 if os.getenv("SERVE_FRONTEND", "false").lower() == "true":
+    import mimetypes
+
+    # Ensure SVG mime type is registered (some minimal images may lack it)
+    mimetypes.add_type("image/svg+xml", ".svg")
+
     frontend_dist = Path(__file__).resolve().parent.parent.parent.parent / "frontend" / "dist"
     if frontend_dist.exists():
         # Serve static assets (JS, CSS, images)
@@ -47,5 +52,7 @@ if os.getenv("SERVE_FRONTEND", "false").lower() == "true":
             """Serve the SPA index.html for any non-API routes."""
             file_path = frontend_dist / full_path
             if file_path.exists() and file_path.is_file():
-                return FileResponse(file_path)
+                # Determine media type for proper Content-Type header
+                media_type, _ = mimetypes.guess_type(str(file_path))
+                return FileResponse(file_path, media_type=media_type)
             return FileResponse(frontend_dist / "index.html")
