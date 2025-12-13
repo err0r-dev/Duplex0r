@@ -5,6 +5,26 @@ All notable changes to Duplex0r PDF Interleaver will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.5] - 2025-12-13
+
+### Added
+
+#### Docker Support
+
+- **Dockerfile** - Multi-stage build for production-ready container image
+- **docker-compose.yml** - Single command deployment with `docker-compose up -d`
+- **Static file serving** - Frontend served from FastAPI in production mode via `SERVE_FRONTEND` environment variable
+- **.dockerignore** - Optimized build context excluding unnecessary files
+- **.env.example** - Documentation for environment variables
+
+### Technical Details
+
+- Multi-stage Docker build: Node.js for frontend compilation, Python 3.13-slim for runtime
+- Frontend assets built with Vite and served directly from FastAPI
+- SQLite database persisted via Docker volume (`duplex0r-data`)
+- Health check endpoint integration for container orchestration
+- Configurable via environment variables: `SERVE_FRONTEND`, `DATABASE_URL`, `ALLOW_ORIGINS`
+
 ## [0.6.0] - 2025-11-13
 
 ### Added

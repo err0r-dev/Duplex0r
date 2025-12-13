@@ -1,4 +1,3 @@
-import type { ChangeEvent } from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AlertOctagon, ArrowUpDown, Download, Loader2, RefreshCcw, RotateCcw, Trash2 } from "lucide-react";
 
@@ -50,12 +49,6 @@ const formatBytes = (bytes: number) => {
   const i = Math.floor(Math.log(bytes) / Math.log(1024));
   const value = bytes / Math.pow(1024, i);
   return `${value.toFixed(1)} ${sizes[i]}`;
-};
-
-const extractFilename = (header: string | null, fallback = "interleaved.pdf") => {
-  if (!header) return fallback;
-  const match = header.match(/filename=\"?([^\";]+)\"?/i);
-  return match?.[1] ?? fallback;
 };
 
 function App() {
@@ -263,16 +256,6 @@ function App() {
     } finally {
       setIsSavingSettings(false);
     }
-  };
-
-  const handleFirstFileChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0] ?? null;
-    setFirstFile(file);
-  };
-
-  const handleSecondFileChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0] ?? null;
-    setSecondFile(file);
   };
 
   const orderLabel = order === "first_second" ? "First PDF first" : "Second PDF first";

@@ -1,8 +1,9 @@
 # Duplex0r PDF Interleaver
 
-![Version](https://img.shields.io/badge/version-0.6.0-blue.svg)
+![Version](https://img.shields.io/badge/version-0.6.5-blue.svg)
 ![Python](https://img.shields.io/badge/python-3.13+-green.svg)
 ![Node](https://img.shields.io/badge/node-18.18+-green.svg)
+![Docker](https://img.shields.io/badge/docker-ready-blue.svg)
 
 Duplex0r is a modern, full-stack web application for interleaving PDF documents. Upload two PDFs, choose the page order, and download a merged result where pages alternate between your documents. Perfect for combining odd/even scanned pages, merging duplex scans, or any scenario requiring page-by-page interleaving.
 
@@ -78,6 +79,10 @@ Duplex0r/
 ├── scripts/
 │   ├── start.py           # Start both servers with one command
 │   └── stop.py            # Stop both servers cleanly
+├── Dockerfile             # Multi-stage Docker build
+├── docker-compose.yml     # Single-command container deployment
+├── .dockerignore          # Files excluded from Docker build
+├── .env.example           # Environment variable documentation
 └── .duplex0r/             # Runtime artifacts (gitignored)
     ├── pids.json          # Process IDs for management
     ├── backend.log        # Backend application logs
@@ -123,6 +128,59 @@ python scripts/stop.py
 ```
 
 This cleanly terminates both servers and removes PID files.
+
+## Docker
+
+Run Duplex0r in a container with a single command:
+
+### Quick Start with Docker
+
+```bash
+docker-compose up -d
+```
+
+Access the application at <http://localhost:8000>
+
+### Docker Commands
+
+```bash
+# Start the container
+docker-compose up -d
+
+# Stop the container
+docker-compose down
+
+# View logs
+docker logs duplex0r-app-1
+
+# Rebuild after code changes
+docker-compose up -d --build
+```
+
+### Build and Run Manually
+
+```bash
+# Build the image
+docker build -t duplex0r:latest .
+
+# Run the container
+docker run -d \
+  --name duplex0r \
+  -p 8000:8000 \
+  -e SERVE_FRONTEND=true \
+  -v duplex0r-data:/app/backend/api/data \
+  duplex0r:latest
+```
+
+### Docker Environment Variables
+
+| Variable | Description | Default |
+| --- | --- | --- |
+| `SERVE_FRONTEND` | Enable serving frontend from FastAPI | `true` |
+| `DATABASE_URL` | Database connection string | `sqlite+aiosqlite:////app/backend/api/data/app.db` |
+| `ALLOW_ORIGINS` | CORS allowed origins | `["*"]` |
+
+Data is persisted in a Docker volume (`duplex0r-data`) for the SQLite database and output files.
 
 ## Manual Commands
 

@@ -1,0 +1,63 @@
+# Git
+.git
+.gitignore
+.github
+
+# Python
+__pycache__
+*.py[cod]
+*$py.class
+.venv
+.pytest_cache
+*.egg-info
+.python-version
+
+# UV
+.uv
+
+# Node
+node_modules
+frontend/node_modules
+npm-debug.log*
+
+# Build outputs (rebuilt in Docker)
+frontend/dist
+frontend/.vite
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# App runtime data
+.dupl3x
+backend/api/data
+*.db
+*.sqlite
+*.sqlite3
+postgres-data-local
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Documentation
+README.md
+CHANGELOG.md
+LICENSE
+
+# Docker (avoid recursive include)
+Dockerfile
+docker-compose*.yml
+.dockerignore
+
+# Logs
+*.log
+
+# macOS
+.DS_Store
+
+# Claude
+.claude
