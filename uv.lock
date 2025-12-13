@@ -83,7 +83,7 @@ wheels = [
 ]
 
 [[package]]
-name = "dupl3x"
+name = "duplex0r"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
