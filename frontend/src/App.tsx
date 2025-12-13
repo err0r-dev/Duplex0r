@@ -541,6 +541,17 @@ function App() {
         </Card>
       </main>
 
+      <footer className="border-t bg-card/50 py-4 text-center">
+        <a
+          href="https://err0r.dev"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+        >
+          © 2025 err0r.dev
+        </a>
+      </footer>
+
       <Dialog open={showFilenameDialog} onOpenChange={setShowFilenameDialog}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
